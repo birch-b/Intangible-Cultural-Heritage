@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useUserStore } from '@/stores/user'
 
 const router = createRouter({
   //vite环境变量import.meta.env.BASE_URL 在vite,config配置中的base配置
@@ -110,6 +111,25 @@ const router = createRouter({
         import('@/views/Heritage/components/HeritageCategory.vue')
     }
   ]
+})
+
+// 路由守卫
+router.beforeEach((to, from, next) => {
+  const userStore = useUserStore()
+  // 需要登录的路径前缀
+  const protectedPaths = ['/user', '/backmanage']
+
+  const isProtected = protectedPaths.some((path) => to.path.startsWith(path))
+
+  if (isProtected) {
+    if (!userStore.token) {
+      next('/login')
+    } else {
+      next()
+    }
+  } else {
+    next()
+  }
 })
 
 export default router

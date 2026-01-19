@@ -1,7 +1,15 @@
 <script setup>
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useUserStore } from '@/stores/user'
+import { ElMessage } from 'element-plus'
+
 const router = useRouter()
+const userStore = useUserStore()
+
+const loginFormRef = ref(null)
+const registerFormRef = ref(null)
+
 // 登录校验
 const form = reactive({
   name: '',
@@ -121,6 +129,44 @@ const count = () => {
     }
   }, 1000)
 }
+
+const handleLogin = async () => {
+  if (!loginFormRef.value) return
+  await loginFormRef.value.validate(async (valid) => {
+    if (valid) {
+      try {
+        await userStore.userLogin({
+          username: form.name,
+          password: form.password
+        })
+        ElMessage.success('登录成功')
+        router.push('/')
+      } catch (error) {
+        console.error(error)
+      }
+    }
+  })
+}
+
+const handleRegister = async () => {
+  if (!registerFormRef.value) return
+  await registerFormRef.value.validate(async (valid) => {
+    if (valid) {
+      try {
+        await userStore.userRegister({
+          username: form1.name,
+          password: form1.password,
+          phone: form1.phone
+        })
+        ElMessage.success('注册成功，请登录')
+        // 简单的切换视图逻辑，如果需要完整动画可能需要模拟点击
+        // 这里暂时不自动切换，让用户手动点击去登录，或者刷新
+      } catch (error) {
+        console.error(error)
+      }
+    }
+  })
+}
 </script>
 
 <template>
@@ -131,6 +177,7 @@ const count = () => {
       <div class="login" v-show="!sign">
         <h1>欢迎登录</h1>
         <el-form
+          ref="loginFormRef"
           :model="form"
           class="form"
           style="max-width: 400px"
@@ -167,13 +214,14 @@ const count = () => {
             </p>
           </el-form-item>
           <el-form-item class="center">
-            <el-button type="primary">登录</el-button>
+            <el-button type="primary" @click="handleLogin">登录</el-button>
           </el-form-item>
         </el-form>
       </div>
       <div class="register" v-show="sign">
         <h1>欢迎注册</h1>
         <el-form
+          ref="registerFormRef"
           :model="form1"
           class="form"
           style="max-width: 400px"
@@ -232,7 +280,7 @@ const count = () => {
             >
           </el-form-item>
           <el-form-item class="center">
-            <el-button type="primary">注册</el-button>
+            <el-button type="primary" @click="handleRegister">注册</el-button>
           </el-form-item>
         </el-form>
       </div>

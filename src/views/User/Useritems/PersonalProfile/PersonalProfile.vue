@@ -1,10 +1,71 @@
 <script setup>
-import { reactive } from 'vue'
+import { reactive, onMounted, computed, watch } from 'vue'
+import { useUserStore } from '@/stores/user'
+import { updateUserInfoAPI } from '@/api/user'
+import { ElMessage } from 'element-plus'
+
+const userStore = useUserStore()
+const formRef = reactive(null)
 
 const formLabelAlign = reactive({
-  password: '',
-  password1: '',
-  changepassword: ''
+  username: '',
+  gender: '',
+  phone: '',
+  profile: ''
+})
+
+const rules = {
+  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }]
+}
+
+// 初始化表单数据
+const initForm = () => {
+  if (userStore.userInfo) {
+    formLabelAlign.username = userStore.userInfo.username || ''
+    formLabelAlign.gender = userStore.userInfo.gender
+    formLabelAlign.phone = userStore.userInfo.phone || ''
+    formLabelAlign.profile = userStore.userInfo.profile || ''
+  }
+}
+
+// 监听 userInfo 变化，确保数据同步
+watch(() => userStore.userInfo, initForm, { deep: true, immediate: true })
+
+// 角色显示转换
+const roleName = computed(() => {
+  const roleMap = {
+    0: '普通用户',
+    1: '管理员',
+    2: '超级管理员'
+  }
+  return roleMap[userStore.userInfo?.role] || '未知角色'
+})
+
+// 头像
+const circleUrl = computed(
+  () =>
+    userStore.userInfo?.avatar ||
+    'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
+)
+
+const handleSubmit = async () => {
+  try {
+    await updateUserInfoAPI({
+      username: formLabelAlign.username,
+      gender: formLabelAlign.gender,
+      phone: formLabelAlign.phone,
+      profile: formLabelAlign.profile
+    })
+    ElMessage.success('修改成功')
+    // 重新获取用户信息以更新状态
+    await userStore.getUserInfo()
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+onMounted(() => {
+  initForm()
 })
 </script>
 
@@ -24,7 +85,7 @@ const formLabelAlign = reactive({
           </div>
           <div class="role">
             <p>角色</p>
-            <p>管理员</p>
+            <p>{{ roleName }}</p>
           </div>
           <div class="collect">
             <p>收藏项目</p>
@@ -43,53 +104,36 @@ const formLabelAlign = reactive({
             <el-form-item
               class="line"
               label="用户名"
-              prop="password"
+              prop="username"
               style="width: 15vw"
-              :label-position="itemLabelPosition"
             >
               <el-input
-                v-model="formLabelAlign.password"
-                type="password"
-                show-password
+                v-model="formLabelAlign.username"
                 size="large"
+                disabled
               />
             </el-form-item>
-            <el-form-item
-              class="line"
-              label="性别"
-              prop="password1"
-              :label-position="itemLabelPosition"
-            >
+            <el-form-item class="line" label="性别" prop="gender">
               <el-select
-                v-model="formLabelAlign.changepassword"
+                v-model="formLabelAlign.gender"
                 style="width: 10vw"
+                placeholder="请选择性别"
               >
-                <el-option label="男" value="男" />
-                <el-option label="女" value="女" />
+                <el-option label="男" :value="1" />
+                <el-option label="女" :value="2" />
+                <el-option label="未知" :value="0" />
               </el-select>
             </el-form-item>
-            <el-form-item
-              class="line"
-              label="手机号"
-              prop="changepassword"
-              :label-position="itemLabelPosition"
-            >
+            <el-form-item class="line" label="手机号" prop="phone">
               <el-input
-                v-model="formLabelAlign.changepassword"
+                v-model="formLabelAlign.phone"
                 style="width: 20vw"
                 size="large"
-                type="password"
-                show-password
               />
             </el-form-item>
-            <el-form-item
-              class="line"
-              label="个人简介"
-              prop="changepassword"
-              :label-position="itemLabelPosition"
-            >
+            <el-form-item class="line" label="个人简介" prop="profile">
               <el-input
-                v-model="formLabelAlign.changepassword"
+                v-model="formLabelAlign.profile"
                 type="textarea"
                 rows="10"
               />
