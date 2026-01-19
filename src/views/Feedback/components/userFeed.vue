@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import { submitFeedbackAPI } from '@/api/feedback'
+import { uploadFileAPI } from '@/api/file'
 import { ElMessage } from 'element-plus'
 
 const feedbackType = ref(null) // 改为单选，对应后端 type 字段
@@ -13,33 +14,10 @@ const formModel = ref({
 const imageUrl = ref([])
 
 // 文件选择变化时的处理函数
+// eslint-disable-next-line no-unused-vars
 const handleFileChange = (file, fileList) => {
-  // 更新formModel中的file属性
+  // 更新formModel中的file属性（虽然提交时主要使用imageUrl，但保持兼容性）
   formModel.value.file = file.raw
-
-  // 更新显示的图片列表
-  imageUrl.value = fileList.map((f) => ({
-    ...f,
-    url: URL.createObjectURL(f.raw)
-  }))
-}
-
-//删除图片事件
-const handleRemove = (file) => {
-  console.log(file)
-  file = null
-  formModel.value.file = null
-  imageUrl.value = []
-}
-
-// 将文件转换为 Base64
-const fileToBase64 = (file) => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.readAsDataURL(file)
-    reader.onload = () => resolve(reader.result)
-    reader.onerror = (error) => reject(error)
-  })
 }
 
 // 提交反馈
@@ -53,37 +31,46 @@ const handleSubmit = async () => {
     return
   }
 
-  const images = []
-  if (formModel.value.file) {
+  // 1. 上传图片
+  let uploadedImageUrls = []
+  if (imageUrl.value.length > 0) {
     try {
-      const base64 = await fileToBase64(formModel.value.file)
-      images.push(base64)
+      const files = imageUrl.value.map((f) => f.raw)
+      const res = await uploadFileAPI(files)
+      if (res.code === '0' && res.data) {
+        // 后端返回的是逗号分隔的字符串 "url1,url2"
+        uploadedImageUrls = res.data.split(',')
+      }
     } catch (error) {
-      console.error('图片转换失败', error)
-      ElMessage.error('图片上传失败')
+      console.error('图片上传失败', error)
+      // 如果上传失败，可以根据需求决定是终止还是继续提交(不带图)
+      // 这里选择终止
       return
     }
   }
 
   // 映射类型：功能建议=2, 体验问题=3, 产品咨询=3, 其他=3
   // 后端定义：1=内容纠错 2=系统建议 3=其他
-  // 这里简化映射：功能建议->2, 体验问题->3, 产品咨询->3, 其他->3
-  // 实际上需要根据业务对齐，这里假设前两个是建议，后面是其他
-  // 根据原页面选项：功能建议, 体验问题, 产品咨询, ...其他
   let typeInt = 3
   if (feedbackType.value === '功能建议') typeInt = 2
-  else if (feedbackType.value === '体验问题')
-    typeInt = 3 // 暂定
+  else if (feedbackType.value === '体验问题') typeInt = 3
   else typeInt = 3
 
+  // 2. 提交反馈 (使用 FormData 提交)
+  const formData = new FormData()
+  formData.append('type', typeInt)
+  formData.append('title', feedbackType.value)
+  formData.append('content', content.value)
+
+  // 添加图片 URL
+  uploadedImageUrls.forEach((url) => {
+    formData.append('images', url)
+  })
+  // 暂时没有联系方式输入框，可以为空
+  // formData.append('contact', '')
+
   try {
-    await submitFeedbackAPI({
-      type: typeInt,
-      title: feedbackType.value, // 用类型作为标题
-      content: content.value,
-      images: images,
-      contact: '' // 暂无联系方式输入框
-    })
+    await submitFeedbackAPI(formData)
     ElMessage.success('反馈提交成功')
     // 重置表单
     feedbackType.value = null
@@ -133,7 +120,7 @@ const handleSubmit = async () => {
         :file-list="imageUrl"
         :on-change="handleFileChange"
         :on-remove="handleRemove"
-        :limit="1"
+        :limit="5"
       >
         <el-icon>
           <Plus />
