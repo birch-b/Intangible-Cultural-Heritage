@@ -1,6 +1,12 @@
 <script setup>
 import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import { useUserStore } from '@/stores/user'
+import { useRouter } from 'vue-router'
+import { loginAPI, updateUserInfoAPI } from '@/api/user'
+
+const userStore = useUserStore()
+const router = useRouter()
 
 const formLabelAlign = reactive({
   password: '',
@@ -58,10 +64,40 @@ const rules = reactive({
   ]
 })
 
-const handleSubmit = () => {
-  formRef.value.validate((valid) => {
+const handleSubmit = async () => {
+  if (!formRef.value) return
+
+  await formRef.value.validate(async (valid) => {
     if (valid) {
-      ElMessage.success('密码修改成功')
+      try {
+        // 1. 验证原密码 (通过尝试登录)
+        await loginAPI({
+          username: userStore.userInfo.username,
+          password: formLabelAlign.password
+        })
+
+        // 2. 原密码验证通过，提交新密码
+        await updateUserInfoAPI({
+          username: userStore.userInfo.username,
+          password: formLabelAlign.password1
+        })
+
+        ElMessage.success('密码修改成功，请重新登录')
+
+        // 3. 退出登录并跳转
+        await userStore.logout()
+        router.push('/login')
+      } catch (error) {
+        // 登录失败通常意味着原密码错误
+        console.error(error)
+        if (error.response && error.response.status === 401) {
+          ElMessage.error('原密码错误，请重试')
+        } else {
+          // 其他错误由拦截器或默认处理，或者这里补充提示
+          // 注意：如果 loginAPI 抛出的错误结构不同，需要适配
+          // 假设 loginAPI 失败会抛出 error
+        }
+      }
     } else {
       ElMessage.error('请检查输入内容')
       return false
