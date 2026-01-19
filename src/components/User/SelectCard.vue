@@ -1,8 +1,13 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useUserStore } from '@/stores/user'
+import { ElMessageBox, ElMessage } from 'element-plus'
+
 const router = useRouter()
 const route = useRoute()
+const userStore = useUserStore()
+
 const lists = ref([
   {
     icon: 'icon-gerenziliao',
@@ -39,13 +44,34 @@ const lists = ref([
     name: 'login'
   }
 ])
-const navigater = (name, index) => {
+
+const navigater = async (name, index) => {
+  // 处理退出登录逻辑
+  if (name === 'login') {
+    try {
+      await ElMessageBox.confirm('确定要退出登录吗？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      })
+      // 确认退出
+      await userStore.logout()
+      ElMessage.success('已退出登录')
+      router.push('/login')
+      // eslint-disable-next-line no-unused-vars
+    } catch (e) {
+      // 取消退出，不做任何操作
+    }
+    return
+  }
+
   router.push(`/${name}`)
   for (let i = 0; i < lists.value.length; i++) {
     lists.value[i].istrue = false
   }
   lists.value[index].istrue = true
 }
+
 onMounted(() => {
   const currentPath = route.path
   lists.value = lists.value.map((item) => ({
