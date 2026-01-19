@@ -44,6 +44,11 @@ http.interceptors.response.use(
   },
   // 响应失败的回调-----------------------------------------------
   (err) => {
+    // 如果是登录接口报 401，说明账号密码错误，不需要执行退出登录逻辑
+    if (err.config && err.config.url && err.config.url.includes('/login')) {
+      return Promise.reject(err)
+    }
+
     if (err.response && err.response.status === 401) {
       ElMessage.error('登录过期，请重新登录')
       const userStore = useUserStore()
