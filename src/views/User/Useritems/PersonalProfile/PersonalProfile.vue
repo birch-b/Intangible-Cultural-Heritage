@@ -2,7 +2,9 @@
 import { reactive, onMounted, computed, watch } from 'vue'
 import { useUserStore } from '@/stores/user'
 import { updateUserInfoAPI } from '@/api/user'
+import { uploadFileAPI } from '@/api/file'
 import { ElMessage } from 'element-plus'
+import { Camera } from '@element-plus/icons-vue'
 
 const userStore = useUserStore()
 const formRef = reactive(null)
@@ -11,7 +13,8 @@ const formLabelAlign = reactive({
   username: '',
   gender: '',
   phone: '',
-  profile: ''
+  profile: '',
+  avatar: ''
 })
 
 const rules = {
@@ -25,6 +28,7 @@ const initForm = () => {
     formLabelAlign.gender = userStore.userInfo.gender
     formLabelAlign.phone = userStore.userInfo.phone || ''
     formLabelAlign.profile = userStore.userInfo.profile || ''
+    formLabelAlign.avatar = userStore.userInfo.avatar || ''
   }
 }
 
@@ -44,23 +48,70 @@ const roleName = computed(() => {
 // 头像
 const circleUrl = computed(
   () =>
+    formLabelAlign.avatar ||
     userStore.userInfo?.avatar ||
     'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
 )
 
+// 头像上传前的校验
+const beforeAvatarUpload = (rawFile) => {
+  if (rawFile.type !== 'image/jpeg' && rawFile.type !== 'image/png') {
+    ElMessage.error('头像必须是 JPG 或 PNG 格式!')
+    return false
+  }
+  if (rawFile.size / 1024 / 1024 > 2) {
+    ElMessage.error('头像大小不能超过 2MB!')
+    return false
+  }
+  return true
+}
+
+// 自定义头像上传
+const uploadAvatar = async ({ file }) => {
+  try {
+    const res = await uploadFileAPI([file])
+    if (res.code === '0' && res.data) {
+      // 假设后端返回的是逗号分隔的字符串，这里只取第一个（虽然我们只传了一个）
+      const urls = res.data.split(',')
+      formLabelAlign.avatar = urls[0]
+      console.log('Avatar uploaded, new URL:', formLabelAlign.avatar)
+      ElMessage.success('头像上传成功，请点击“修改”按钮保存')
+    } else {
+      ElMessage.error(res.message || '头像上传失败')
+    }
+  } catch (error) {
+    console.error('头像上传异常', error)
+    ElMessage.error('头像上传异常')
+  }
+}
+
 const handleSubmit = async () => {
   try {
-    await updateUserInfoAPI({
-      username: formLabelAlign.username,
+    // 确保 username 存在
+    const currentUsername =
+      formLabelAlign.username || userStore.userInfo?.username
+    if (!currentUsername) {
+      ElMessage.error('用户信息异常，无法修改')
+      return
+    }
+
+    const updateData = {
+      username: currentUsername,
       gender: formLabelAlign.gender,
       phone: formLabelAlign.phone,
-      profile: formLabelAlign.profile
-    })
+      profile: formLabelAlign.profile,
+      avatar: formLabelAlign.avatar
+    }
+
+    console.log('Submitting update data:', updateData)
+
+    await updateUserInfoAPI(updateData)
     ElMessage.success('修改成功')
     // 重新获取用户信息以更新状态
     await userStore.getUserInfo()
   } catch (error) {
-    console.error(error)
+    console.error('Update failed:', error)
+    ElMessage.error('修改失败')
   }
 }
 
@@ -80,8 +131,20 @@ onMounted(() => {
       </el-header>
       <el-main>
         <div class="show">
-          <div>
-            <el-avatar :size="80" :src="circleUrl" />
+          <div class="avatar-container">
+            <el-upload
+              class="avatar-uploader"
+              action="#"
+              :show-file-list="false"
+              :http-request="uploadAvatar"
+              :before-upload="beforeAvatarUpload"
+            >
+              <el-avatar :size="80" :src="circleUrl" />
+              <div class="avatar-mask">
+                <el-icon><Camera /></el-icon>
+                <span>更换头像</span>
+              </div>
+            </el-upload>
           </div>
           <div class="role">
             <p>角色</p>
@@ -156,6 +219,43 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 @use '@/styles/var.scss' as *;
+
+.avatar-container {
+  position: relative;
+  cursor: pointer;
+
+  .avatar-uploader {
+    display: inline-block;
+  }
+
+  .avatar-mask {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none; /* 让点击事件穿透到 el-upload */
+
+    span {
+      font-size: 12px;
+      margin-top: 2px;
+    }
+  }
+
+  &:hover .avatar-mask {
+    opacity: 1;
+  }
+}
+
 :deep(.el-textarea__inner) {
   resize: none;
 }
