@@ -69,6 +69,16 @@
             <el-menu-item index="6-1">培训课程管理</el-menu-item>
             <el-menu-item index="6-2">培训报名管理</el-menu-item>
           </el-sub-menu>
+          <!-- 审核与反馈管理 -->
+          <el-sub-menu index="8">
+            <template #title>
+              <el-icon>
+                <ChatDotSquare />
+              </el-icon>
+              <span class="ml-2">审核与反馈管理</span>
+            </template>
+            <el-menu-item index="8-1">用户反馈管理</el-menu-item>
+          </el-sub-menu>
         </el-menu>
       </div>
     </div>
@@ -115,7 +125,14 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { House, Setting, User, Box, Goods } from '@element-plus/icons-vue'
+import {
+  House,
+  Setting,
+  User,
+  Box,
+  Goods,
+  ChatDotSquare
+} from '@element-plus/icons-vue'
 
 // 导入所有视图组件
 import HomeView from './components/HomeView.vue'
@@ -128,6 +145,7 @@ import ActivityListView from './components/ActivityListView.vue'
 import ActivityCategoryView from './components/ActivityCategoryView.vue'
 import TrainingCourseView from './components/TrainingCourseView.vue'
 import TrainingRegistrationView from './components/TrainingRegistrationView.vue'
+import UserFeedbackView from './components/UserFeedbackView.vue'
 
 // 定义 activeMenu
 const activeMenu = ref('1')
@@ -158,6 +176,8 @@ const currentComponent = computed(() => {
       return TrainingCourseView
     case 'TrainingRegistrationView':
       return TrainingRegistrationView
+    case 'UserFeedbackView':
+      return UserFeedbackView
     default:
       return HomeView
   }
@@ -195,6 +215,9 @@ const handleMenuSelect = (index) => {
       break
     case '6-2':
       currentView.value = 'TrainingRegistrationView'
+      break
+    case '8-1':
+      currentView.value = 'UserFeedbackView'
       break
     default:
       currentView.value = 'HomeView'

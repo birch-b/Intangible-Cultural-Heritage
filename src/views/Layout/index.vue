@@ -34,10 +34,10 @@ const search_text = ref('')
             <el-menu-item index="/activity">
               <span>活动资讯</span>
             </el-menu-item>
-            <el-menu-item index="education">
+            <el-menu-item index="/education">
               <span>教育培训</span>
             </el-menu-item>
-            <el-menu-item index="feedback">
+            <el-menu-item index="/feedback">
               <span>用户反馈</span>
             </el-menu-item>
           </el-menu>

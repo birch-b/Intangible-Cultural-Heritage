@@ -20,6 +20,10 @@ const handleFileChange = (file, fileList) => {
   formModel.value.file = file.raw
 }
 
+const handleRemove = (file, fileList) => {
+  console.log(file, fileList)
+}
+
 // 提交反馈
 const handleSubmit = async () => {
   if (!feedbackType.value) {
@@ -117,7 +121,7 @@ const handleSubmit = async () => {
         list-type="picture-card"
         :auto-upload="false"
         accept=".jpg,.png,.jpeg,.bmp"
-        :file-list="imageUrl"
+        v-model:file-list="imageUrl"
         :on-change="handleFileChange"
         :on-remove="handleRemove"
         :limit="5"

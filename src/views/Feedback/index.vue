@@ -1,5 +1,5 @@
 <script setup>
-import UserFeed from './components/UserFeed.vue'
+import UserFeed from './components/userFeed.vue'
 </script>
 
 <template>

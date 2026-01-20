@@ -1,28 +1,25 @@
 import request from '@/utils/request'
 
-// 提交反馈
-export const submitFeedbackAPI = (data) => {
-  return request({
-    url: '/admin/v1/feedback/submit',
-    method: 'post',
-    data
-  })
-}
-
-// 分页查询反馈列表
+/**
+ * 获取反馈分页列表
+ * @param {Object} params - { page, pageSize, type, status }
+ */
 export const getFeedbackPageAPI = (params) => {
-  return request({
-    url: '/admin/v1/feedback/page',
-    method: 'get',
-    params
-  })
+  return request.get('/admin/v1/feedback/page', { params })
 }
 
-// 回复反馈 (仅管理员)
+/**
+ * 回复反馈
+ * @param {Object} data - { id, replyContent, status }
+ */
 export const replyFeedbackAPI = (data) => {
-  return request({
-    url: '/admin/v1/feedback/reply',
-    method: 'post',
-    data
-  })
+  return request.post('/admin/v1/feedback/reply', data)
+}
+
+/**
+ * 提交反馈
+ * @param {FormData} data
+ */
+export const submitFeedbackAPI = (data) => {
+  return request.post('/admin/v1/feedback/submit', data)
 }
