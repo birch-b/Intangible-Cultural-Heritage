@@ -1,8 +1,48 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
+import { pageNotice } from '@/api/notice.js'
 
 // 搜索框绑定值
 const search_text = ref('')
+
+const hasUnread = ref(false)
+let timer = null
+
+const checkUnread = async () => {
+  try {
+    const res = await pageNotice({ page: 1, pageSize: 1, readStatus: 0 })
+    console.log('Check Unread Response:', res) // Debug log
+    
+    // 兼容多种返回结构，优先判断 records 是否有数据
+    if (res.data) {
+      const { total, records } = res.data
+      // 如果 total 大于 0，或者 records 数组非空，都视为有未读消息
+      if ((total && total > 0) || (records && records.length > 0)) {
+        hasUnread.value = true
+      } else {
+        hasUnread.value = false
+      }
+    } else {
+       // 防御性编程：如果 res 本身就是 data (某些 request 封装会直接返回 data)
+       if ((res.total && res.total > 0) || (res.records && res.records.length > 0)) {
+          hasUnread.value = true
+       } else {
+          hasUnread.value = false
+       }
+    }
+  } catch (e) {
+    console.error('Check notice failed', e)
+  }
+}
+
+onMounted(() => {
+  checkUnread()
+  timer = setInterval(checkUnread, 30000)
+})
+
+onUnmounted(() => {
+  if (timer) clearInterval(timer)
+})
 </script>
 
 <template>
@@ -57,9 +97,11 @@ const search_text = ref('')
             </el-input>
           </div>
           <div class="avatar" @click="$router.push('/user')">
-            <el-icon>
-              <UserFilled />
-            </el-icon>
+            <el-badge :is-dot="hasUnread" class="badge-item">
+              <el-icon>
+                <UserFilled />
+              </el-icon>
+            </el-badge>
           </div>
         </div>
       </el-header>

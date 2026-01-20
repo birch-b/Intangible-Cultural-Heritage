@@ -1,17 +1,34 @@
 <script setup>
 import { useRouter } from 'vue-router'
+import { formatTime } from '@/utils/format'
 const router = useRouter()
+const props = defineProps({
+  info: {
+    type: Object,
+    default: () => ({})
+  }
+})
+
 const navigater = () => {
-  router.push('detail')
+  router.push({
+    path: 'detail',
+    query: {
+      id: props.info.id,
+      title: props.info.title,
+      content: props.info.content,
+      createTime: props.info.createTime
+    }
+  })
 }
 </script>
 <template>
   <div class="MessageCard" @click="navigater">
     <div class="left">
-      <h3>亲爱的用户,你好</h3>
-      <p>2024/11/7 12:00</p>
+      <h3>{{ info.title || '系统通知' }}</h3>
+      <p>{{ formatTime(info.createTime) }}</p>
     </div>
-    <div class="right">未读</div>
+    <div class="right" v-if="info.readStatus === 0">未读</div>
+    <div class="right" v-else style="color: #e0e0e0">已读</div>
   </div>
 </template>
 

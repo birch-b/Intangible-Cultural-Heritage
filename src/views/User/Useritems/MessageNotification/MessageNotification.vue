@@ -1,13 +1,49 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import MessageCard from '@/components/User/MessageCard.vue'
-const onePage = ref(5)
+import { pageNotice } from '@/api/notice.js'
+
+const msgList = ref([])
+const total = ref(0)
+const currentPage = ref(1)
+const pageSize = ref(5)
+
+const getNoticeList = async () => {
+  try {
+    const res = await pageNotice({
+      page: currentPage.value,
+      pageSize: pageSize.value
+    })
+    console.log('Notice List Response:', res)
+
+    // 优先尝试从 res.data 获取，如果不行则尝试直接从 res 获取
+    if (res.data && res.data.records) {
+      msgList.value = res.data.records
+      total.value = parseInt(res.data.total) || 0
+    } else if (res.records) {
+      msgList.value = res.records
+      total.value = parseInt(res.total) || 0
+    } else {
+      msgList.value = []
+      total.value = 0
+    }
+  } catch (e) {
+    console.error('Get notice list failed', e)
+  }
+}
+
 const handleSizeChange = (val) => {
-  onePage.value = val
+  pageSize.value = val
+  getNoticeList()
 }
 const handleCurrentChange = (val) => {
-  console.log(`current page: ${val}`)
+  currentPage.value = val
+  getNoticeList()
 }
+
+onMounted(() => {
+  getNoticeList()
+})
 </script>
 
 <!-- 消息通知 -->
@@ -21,19 +57,21 @@ const handleCurrentChange = (val) => {
       </el-header>
       <el-main
         ><div class="main">
-          <MessageCard v-for="index in onePage" :key="index"></MessageCard></div
+          <MessageCard
+            v-for="item in msgList"
+            :key="item.id"
+            :info="item"
+          ></MessageCard></div
       ></el-main>
       <el-footer>
         <div class="pagination">
           <el-pagination
-            v-model:current-page="currentPage4"
-            v-model:page-size="pageSize4"
-            :page-sizes="[1, 2, 3, 4, 5]"
+            v-model:current-page="currentPage"
+            v-model:page-size="pageSize"
+            :page-sizes="[5, 10, 20]"
             size="large"
-            :disabled="disabled"
-            background="false"
             layout="total, sizes, prev, pager, next, jumper"
-            :total="100"
+            :total="total"
             @size-change="handleSizeChange"
             @current-change="handleCurrentChange"
           />

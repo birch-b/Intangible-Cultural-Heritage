@@ -102,11 +102,14 @@
         </el-table-column>
 
         <el-table-column
-          prop="createTime"
           label="提交时间"
           width="180"
           align="center"
-        />
+        >
+          <template #default="scope">
+            {{ formatTime(scope.row.createTime) }}
+          </template>
+        </el-table-column>
 
         <el-table-column label="操作" width="120" align="center" fixed="right">
           <template #default="scope">
@@ -183,6 +186,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { getFeedbackPageAPI, replyFeedbackAPI } from '@/api/feedback'
+import { formatTime } from '@/utils/format'
 import { ElMessage } from 'element-plus'
 
 // --- 数据定义 ---

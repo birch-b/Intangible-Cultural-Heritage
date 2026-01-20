@@ -1,4 +1,21 @@
-<script setup></script>
+<script setup>
+import { useRoute } from 'vue-router'
+import { onMounted } from 'vue'
+import { markAsRead } from '@/api/notice.js'
+
+const route = useRoute()
+// 直接解构路由参数供模板使用
+const { id, title, content, createTime } = route.query
+
+onMounted(() => {
+  if (id) {
+    // 调用接口标记为已读
+    markAsRead(id).catch(e => {
+      console.error('Mark as read failed:', e)
+    })
+  }
+})
+</script>
 
 <!-- 消息通知 -->
 <template>
@@ -14,13 +31,13 @@
           <div class="topic">
             <el-avatar> 管 </el-avatar>
             <div class="name">
-              <h4>管理员</h4>
-              <p>2023/11/7 12:00</p>
+              <h4>{{ title || '系统通知' }}</h4>
+              <p>{{ formatTime(createTime) }}</p>
             </div>
           </div>
           <div class="content">
             <el-scrollbar max-height="65vh" style="padding-top: 2vh"
-              >132</el-scrollbar
+              >{{ content }}</el-scrollbar
             >
           </div>
           <div class="footer">
