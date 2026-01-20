@@ -3,7 +3,7 @@ import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import router from '@/router'
 
-const baseURL = '/api'
+const baseURL = import.meta.env.PROD ? '/gric/api' : '/api'
 // 创建axios实例
 const http = axios.create({
   baseURL,
