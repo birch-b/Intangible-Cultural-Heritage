@@ -7,6 +7,7 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: '/gric/', // 部署到 /gric/ 子路径下
   plugins: [vue(), vueDevTools()],
   resolve: {
     alias: {
@@ -16,6 +17,14 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
+        target: 'http://localhost:30002',
+        changeOrigin: true
+      },
+      '/uploads': {
+        target: 'http://localhost:30002',
+        changeOrigin: true
+      },
+      '/gric/uploads': {
         target: 'http://localhost:30002',
         changeOrigin: true
       }
