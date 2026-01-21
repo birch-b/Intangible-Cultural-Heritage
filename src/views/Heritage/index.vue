@@ -32,7 +32,9 @@ const getFeaturedItems = async () => {
     })
     if (res.code === '0' || res.code === 200 || !res.code) {
       const data = res.data || res
-      featuredItems.value = data.records || []
+      // 前端二次过滤，确保只显示精选项目（兼容数字1和字符串'1'）
+      const records = data.records || []
+      featuredItems.value = records.filter(item => item.isFeatured == 1)
     }
   } catch (error) {
     console.error('获取精选非遗失败', error)
