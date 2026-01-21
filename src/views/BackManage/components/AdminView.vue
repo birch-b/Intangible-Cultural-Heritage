@@ -4,6 +4,11 @@
       <div class="card-header">
         <span>管理员管理</span>
         <div class="header-actions">
+          <el-select v-model="searchRole" placeholder="角色" clearable style="width: 120px; margin-right: 10px" @change="searchAdmins">
+            <el-option label="普通用户" :value="0" />
+            <el-option label="普通管理员" :value="1" />
+            <el-option label="超级管理员" :value="2" />
+          </el-select>
           <el-input
             v-model="adminSearchQuery"
             placeholder="请输入管理员名称"
@@ -22,9 +27,8 @@
 
     <!-- 管理员列表 -->
     <el-table :data="adminList" stripe style="width: 100%">
-      <el-table-column prop="id" label="ID" width="80" />
-      <el-table-column prop="account" label="账号" width="120" />
-      <el-table-column prop="name" label="姓名" width="120" />
+      <el-table-column type="index" :index="indexMethod" label="序号" width="80" />
+      <el-table-column prop="username" label="用户名" width="150" />
       <el-table-column prop="role" label="角色">
         <template #default="scope">
           <el-tag
@@ -55,7 +59,7 @@
             type="danger"
             @click="handleDeleteAdmin(scope.row)"
             :disabled="
-              userInfo.role !== '超级管理员' || scope.row.role === '超级管理员'
+              userInfo.role !== '超级管理员' || scope.row.role === '超级管理员' || scope.row.username === userInfo.username
             "
           >
             删除
@@ -90,14 +94,11 @@
         ref="adminFormRef"
         label-width="100px"
       >
-        <el-form-item label="账号" prop="account">
+        <el-form-item label="用户名" prop="username">
           <el-input
-            v-model="adminForm.account"
+            v-model="adminForm.username"
             :disabled="adminFormMode === 'edit'"
           />
-        </el-form-item>
-        <el-form-item label="姓名" prop="name">
-          <el-input v-model="adminForm.name" />
         </el-form-item>
         <el-form-item label="角色" prop="role">
           <el-select
@@ -149,7 +150,7 @@
 
     <!-- 删除确认对话框 -->
     <el-dialog v-model="deleteDialogVisible" title="删除确认" width="400px">
-      <p>确定要删除管理员 "{{ adminToDelete.name }}" 吗？此操作不可撤销。</p>
+      <p>确定要删除管理员 "{{ adminToDelete.username }}" 吗？此操作不可撤销。</p>
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="deleteDialogVisible = false">取消</el-button>
@@ -163,9 +164,10 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted, nextTick } from 'vue'
 import { Search, Plus } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import { pageUserAPI, createAdminAPI, updateAdminAPI, deleteUserAPI } from '@/api/user'
 
 // 接收userInfo作为props
 const props = defineProps({
@@ -178,49 +180,13 @@ const props = defineProps({
 console.log('userInfo', props.userInfo)
 // 管理员列表相关
 const adminSearchQuery = ref('')
+const searchRole = ref(null)
 const currentPage = ref(1)
 const pageSize = ref(10)
-const totalAdmins = ref(100)
+const totalAdmins = ref(0)
 
-// 模拟管理员数据
-const adminList = ref([
-  {
-    id: 1,
-    account: 'admin',
-    name: '系统管理员',
-    role: '超级管理员',
-    phone: '13912345678',
-    createTime: '2023-12-01 09:00:00',
-    lastLogin: '2024-01-30 14:30:00'
-  },
-  {
-    id: 2,
-    account: 'zhangwei',
-    name: '张伟',
-    role: '超级管理员',
-    phone: '13812345678',
-    createTime: '2024-01-01',
-    lastLogin: '2024-01-20 14:30:00'
-  },
-  {
-    id: 3,
-    account: 'liming',
-    name: '李明',
-    role: '普通管理员',
-    phone: '13712345678',
-    createTime: '2024-01-05',
-    lastLogin: '2024-01-19 10:15:00'
-  },
-  {
-    id: 4,
-    account: 'wangfang',
-    name: '王芳',
-    role: '普通管理员',
-    phone: '13612345678',
-    createTime: '2024-01-10',
-    lastLogin: '2024-01-18 16:45:00'
-  }
-])
+// 管理员数据
+const adminList = ref([])
 
 // 对话框相关
 const adminDialogVisible = ref(false)
@@ -228,8 +194,7 @@ const adminFormMode = ref('add')
 const adminFormRef = ref(null)
 const adminForm = reactive({
   id: 0,
-  account: '',
-  name: '',
+  username: '',
   role: '普通管理员',
   phone: '',
   password: '',
@@ -240,9 +205,14 @@ const adminForm = reactive({
 const deleteDialogVisible = ref(false)
 const adminToDelete = ref(null)
 
+// 计算表格序号
+const indexMethod = (index) => {
+  return (currentPage.value - 1) * pageSize.value + index + 1
+}
+
 // 表单验证规则
 const validatePass = (rule, value, callback) => {
-  if (value === '') {
+  if (adminFormMode.value === 'add' && value === '') {
     callback(new Error('请输入密码'))
   } else {
     if (adminForm.confirmPassword !== '') {
@@ -252,7 +222,7 @@ const validatePass = (rule, value, callback) => {
   }
 }
 const validatePass2 = (rule, value, callback) => {
-  if (value === '') {
+  if (adminFormMode.value === 'add' && value === '') {
     callback(new Error('请再次输入密码'))
   } else if (value !== adminForm.password) {
     callback(new Error('两次输入密码不一致!'))
@@ -262,11 +232,10 @@ const validatePass2 = (rule, value, callback) => {
 }
 
 const adminRules = {
-  account: [
-    { required: true, message: '请输入账号', trigger: 'blur' },
+  username: [
+    { required: true, message: '请输入用户名', trigger: 'blur' },
     { min: 3, max: 20, message: '长度在 3 到 20 个字符', trigger: 'blur' }
   ],
-  name: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
   role: [{ required: true, message: '请选择角色', trigger: 'change' }],
   phone: [
     { required: true, message: '请输入电话号码', trigger: 'blur' },
@@ -292,14 +261,26 @@ const handleCurrentChange = (val) => {
 }
 
 // 获取管理员列表
-const fetchAdminList = () => {
-  // 这里应该是调用API获取数据，现在使用模拟数据
-  console.log('获取管理员列表', {
-    page: currentPage.value,
-    pageSize: pageSize.value,
-    query: adminSearchQuery.value
-  })
-  // 实际项目中，这里应该调用后端API
+const fetchAdminList = async () => {
+  try {
+    const params = {
+      current: currentPage.value,
+      size: pageSize.value,
+      username: adminSearchQuery.value,
+      role: searchRole.value
+    }
+    const res = await pageUserAPI(params)
+    if (res.code === '0') {
+      adminList.value = res.data.records.map(item => ({
+        ...item,
+        role: item.role === 2 ? '超级管理员' : (item.role === 1 ? '普通管理员' : '普通用户')
+      }))
+      totalAdmins.value = res.data.total
+    }
+  } catch (error) {
+    console.error('获取管理员列表失败', error)
+    ElMessage.error('获取管理员列表失败')
+  }
 }
 
 // 搜索管理员
@@ -318,7 +299,11 @@ const showAddAdminDialog = () => {
 // 编辑管理员
 const handleEditAdmin = (row) => {
   adminFormMode.value = 'edit'
-  Object.assign(adminForm, row)
+  // 只复制需要的字段
+  adminForm.id = row.id
+  adminForm.username = row.username
+  adminForm.role = row.role
+  adminForm.phone = row.phone
   adminForm.password = ''
   adminForm.confirmPassword = ''
   adminDialogVisible.value = true
@@ -331,42 +316,73 @@ const handleDeleteAdmin = (row) => {
 }
 
 // 确认删除管理员
-const confirmDeleteAdmin = () => {
-  // 这里应该调用API删除管理员
-  console.log('删除管理员', adminToDelete.value)
-  ElMessage.success(`管理员 "${adminToDelete.value.name}" 已成功删除`)
-  deleteDialogVisible.value = false
-  // 删除后刷新列表
-  fetchAdminList()
+const confirmDeleteAdmin = async () => {
+  try {
+    const res = await deleteUserAPI(adminToDelete.value.username)
+    if (res.code === '0') {
+      ElMessage.success(`管理员 "${adminToDelete.value.username}" 已成功删除`)
+      deleteDialogVisible.value = false
+      fetchAdminList()
+    }
+  } catch (error) {
+    console.error('删除失败', error)
+    ElMessage.error('删除失败')
+  }
 }
 
 // 重置表单
 const resetAdminForm = () => {
   adminForm.id = 0
-  adminForm.account = ''
-  adminForm.name = ''
+  adminForm.username = ''
   adminForm.role = '普通管理员'
   adminForm.phone = ''
   adminForm.password = ''
   adminForm.confirmPassword = ''
-  adminFormRef.value?.resetFields()
+  nextTick(() => {
+    adminFormRef.value?.resetFields()
+  })
 }
 
 // 提交表单
 const submitAdminForm = () => {
-  adminFormRef.value?.validate((valid) => {
+  adminFormRef.value?.validate(async (valid) => {
     if (valid) {
-      if (adminFormMode.value === 'add') {
-        // 这里应该调用API添加管理员
-        console.log('添加管理员', adminForm)
-        ElMessage.success('添加管理员成功')
-      } else {
-        // 这里应该调用API更新管理员
-        console.log('更新管理员', adminForm)
-        ElMessage.success('更新管理员成功')
+      try {
+        if (adminFormMode.value === 'add') {
+          // 添加管理员
+          const reqData = {
+            username: adminForm.username,
+            password: adminForm.password,
+            phone: adminForm.phone,
+            role: adminForm.role === '超级管理员' ? 2 : 1
+          }
+          const res = await createAdminAPI(reqData)
+          if (res.code === '0') {
+            ElMessage.success('添加管理员成功')
+            adminDialogVisible.value = false
+            fetchAdminList()
+          }
+        } else {
+          // 更新管理员
+          const reqData = {
+            username: adminForm.username,
+            phone: adminForm.phone,
+            role: adminForm.role === '超级管理员' ? 2 : 1
+          }
+          if (adminForm.password) {
+            reqData.password = adminForm.password
+          }
+          const res = await updateAdminAPI(reqData)
+          if (res.code === '0') {
+            ElMessage.success('更新管理员成功')
+            adminDialogVisible.value = false
+            fetchAdminList()
+          }
+        }
+      } catch (error) {
+        console.error('提交失败', error)
+        ElMessage.error('操作失败: ' + (error.msg || '未知错误'))
       }
-      adminDialogVisible.value = false
-      fetchAdminList()
     } else {
       return false
     }
@@ -374,7 +390,9 @@ const submitAdminForm = () => {
 }
 
 // 初始加载
-fetchAdminList()
+onMounted(() => {
+  fetchAdminList()
+})
 </script>
 
 <style scoped>

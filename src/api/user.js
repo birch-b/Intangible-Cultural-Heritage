@@ -46,3 +46,38 @@ export const updateUserInfoAPI = (data) => {
     data
   })
 }
+
+// 分页获取用户列表（管理员管理）
+export const pageUserAPI = (params) => {
+  return request({
+    url: '/admin/v1/user/page',
+    method: 'get',
+    params
+  })
+}
+
+// 管理员新增用户
+export const createAdminAPI = (data) => {
+  return request({
+    url: '/admin/v1/user/admin',
+    method: 'post',
+    data
+  })
+}
+
+// 管理员修改用户
+export const updateAdminAPI = (data) => {
+  return request({
+    url: '/admin/v1/user/admin',
+    method: 'put',
+    data
+  })
+}
+
+// 删除用户
+export const deleteUserAPI = (username) => {
+  return request({
+    url: `/admin/v1/user/${username}`,
+    method: 'delete'
+  })
+}
