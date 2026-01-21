@@ -1,5 +1,32 @@
 <script setup>
 import { ArrowRight } from '@element-plus/icons-vue'
+import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import { getHeritageDetailAPI } from '@/api/heritage'
+
+const route = useRoute()
+const detail = ref({})
+const loading = ref(false)
+
+const getDetail = async () => {
+  const id = route.query.id
+  if (!id) return
+  loading.value = true
+  try {
+    const res = await getHeritageDetailAPI(id)
+    if (res.code === '0' || res.code === 200 || !res.code) {
+      detail.value = res.data || res
+    }
+  } catch (e) {
+    console.error(e)
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  getDetail()
+})
 </script>
 
 <template>
@@ -9,17 +36,37 @@ import { ArrowRight } from '@element-plus/icons-vue'
         <el-breadcrumb-item :to="{ path: '/heritage' }">
           非遗展示
         </el-breadcrumb-item>
-        <el-breadcrumb-item :to="{ path: '/heritage' }">
-          精选非遗项目
+        <el-breadcrumb-item :to="{ path: '/heri_category' }">
+          {{ detail.categoryName || '全部分类' }}
         </el-breadcrumb-item>
-        <el-breadcrumb-item :to="{ path: '/heri_detail' }">
-          项目详情
+        <el-breadcrumb-item>
+          {{ detail.title || '项目详情' }}
         </el-breadcrumb-item>
       </el-breadcrumb>
     </div>
-    <div class="de_content">
-      <div class="left_image"></div>
-      <div class="right_text"></div>
+    <div class="de_content" v-loading="loading">
+      <div class="left_image">
+        <el-image 
+          v-if="detail.coverImage"
+          :src="detail.coverImage" 
+          fit="contain" 
+          style="width: 100%; height: 100%"
+          preview-teleported
+          :preview-src-list="[detail.coverImage]"
+        />
+        <div v-else class="no-image">暂无图片</div>
+      </div>
+      <div class="right_text">
+        <h1 class="item-title">{{ detail.title }}</h1>
+        <div class="item-meta">
+          <span v-if="detail.region">地区：{{ detail.region }}</span>
+          <span v-if="detail.createTime">发布时间：{{ new Date(detail.createTime).toLocaleDateString() }}</span>
+        </div>
+        <div class="item-summary" v-if="detail.summary">
+          <strong>简介：</strong>{{ detail.summary }}
+        </div>
+        <div class="item-content" v-html="detail.content"></div>
+      </div>
     </div>
   </div>
 </template>
@@ -47,6 +94,9 @@ import { ArrowRight } from '@element-plus/icons-vue'
       .el-breadcrumb__inner.is-link {
         color: #ddcbcb;
       }
+      .el-breadcrumb__inner {
+        color: #fff;
+      }
     }
   }
 
@@ -58,17 +108,61 @@ import { ArrowRight } from '@element-plus/icons-vue'
     flex-wrap: wrap;
     justify-content: space-between;
     background-color: #d8cfd0;
+    padding: 20px;
+    border-radius: 8px;
+    overflow: hidden;
 
     .left_image {
-      width: 60%;
+      width: 50%;
       height: 100%;
-      background-color: #8b6364;
+      background-color: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      
+      .no-image {
+        color: #fff;
+      }
     }
 
     .right_text {
-      width: 39%;
+      width: 48%;
       height: 100%;
-      background-color: #5f4d4f;
+      background-color: #fff; /* 改为白色背景方便阅读 */
+      padding: 20px;
+      overflow-y: auto;
+      color: #333;
+
+      .item-title {
+        font-size: 24px;
+        margin-bottom: 10px;
+        color: #88393c;
+      }
+
+      .item-meta {
+        color: #666;
+        font-size: 14px;
+        margin-bottom: 15px;
+        span {
+          margin-right: 15px;
+        }
+      }
+
+      .item-summary {
+        background-color: #f5f5f5;
+        padding: 10px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+        line-height: 1.6;
+      }
+
+      .item-content {
+        line-height: 1.8;
+        white-space: pre-wrap;
+        img {
+          max-width: 100%;
+        }
+      }
     }
   }
 }

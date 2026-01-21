@@ -1,6 +1,48 @@
 <script setup>
+import { ref, onMounted } from 'vue'
 import ExpItem from './components/ExpItem.vue'
 import ChoItem from './components/ChoItem.vue'
+import { getHeritagePageAPI, getCategoryListAPI } from '@/api/heritage'
+
+const exploreItems = ref([])
+const featuredItems = ref([])
+
+// 获取探索非遗（获取前4个分类）
+const getExploreItems = async () => {
+  try {
+    const res = await getCategoryListAPI()
+    if (res.code === '0' || res.code === 200 || !res.code) {
+      const data = res.data || res
+      // 截取前4个分类
+      exploreItems.value = (data || []).slice(0, 4)
+    }
+  } catch (error) {
+    console.error('获取探索非遗分类失败', error)
+  }
+}
+
+// 获取精选非遗
+const getFeaturedItems = async () => {
+  try {
+    const res = await getHeritagePageAPI({ 
+      current: 1, 
+      size: 4, 
+      isFeatured: 1, 
+      status: 2 
+    })
+    if (res.code === '0' || res.code === 200 || !res.code) {
+      const data = res.data || res
+      featuredItems.value = data.records || []
+    }
+  } catch (error) {
+    console.error('获取精选非遗失败', error)
+  }
+}
+
+onMounted(() => {
+  getExploreItems()
+  getFeaturedItems()
+})
 </script>
 
 <template>
@@ -17,11 +59,11 @@ import ChoItem from './components/ChoItem.vue'
     <div class="explore">
       <h2>探索广东非遗</h2>
       <p @click="$router.push('/heri_category')">查看全部></p>
-      <ExpItem />
+      <ExpItem :items="exploreItems" />
     </div>
     <div class="choiceness">
       <h2>精选非遗项目</h2>
-      <ChoItem />
+      <ChoItem :items="featuredItems" />
     </div>
   </div>
 </template>

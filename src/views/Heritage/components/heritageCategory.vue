@@ -1,59 +1,99 @@
 <script setup>
 import { ArrowRight } from '@element-plus/icons-vue'
-import { ref } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { getCategoryListAPI, getHeritagePageAPI } from '@/api/heritage'
+
+const router = useRouter()
 
 // 下拉框数据
 const selectValue = ref('')
-const selectOptions = ref([
-  {
-    value: '歌剧',
-    label: '歌剧'
-  },
-  {
-    value: '戏曲',
-    label: '戏曲'
-  }
-])
+const selectOptions = ref([])
 
-// 模拟表格数据
-const tableData = ref([
-  {
-    itemName: '粤剧',
-    date: '明朝',
-    introduce:
-      '粤剧是流行于广东、广西及港澳地区的重要传统戏剧形式，‌常被称为“广府戏”或“广东大戏”。',
-    itemImg: ''
-    // itemImg: new URL('@/assets/itemImg.jpg', import.meta.url).href
-  },
-  {
-    itemName: '粤剧',
-    date: '明朝',
-    introduce:
-      '粤剧是流行于广东、广西及港澳地区的重要传统戏剧形式，‌常被称为“广府戏”或“广东大戏”。',
-    itemImg: ''
-  },
-  {
-    itemName: '粤剧',
-    date: '明朝',
-    introduce:
-      '粤剧是流行于广东、广西及港澳地区的重要传统戏剧形式，‌常被称为“广府戏”或“广东大戏”。',
-    itemImg: ''
-  },
-  {
-    itemName: '粤剧',
-    date: '明朝',
-    introduce:
-      '粤剧是流行于广东、广西及港澳地区的重要传统戏剧形式，‌常被称为“广府戏”或“广东大戏”。',
-    itemImg: ''
-  },
-  {
-    itemName: '粤剧',
-    date: '明朝',
-    introduce:
-      '粤剧是流行于广东、广西及港澳地区的重要传统戏剧形式，‌常被称为“广府戏”或“广东大戏”。',
-    itemImg: ''
+// 表格数据
+const tableData = ref([])
+const total = ref(0)
+const loading = ref(false)
+
+// 分页参数
+const pageParams = ref({
+  current: 1,
+  size: 10
+})
+
+// 获取类别列表
+const getCategoryList = async () => {
+  try {
+    const res = await getCategoryListAPI()
+    if (res.code === '0' || res.code === 200 || !res.code) { // 兼容不同返回结构
+      const data = res.data || res
+      selectOptions.value = data.map(item => ({
+        value: item.id,
+        label: item.name
+      }))
+    }
+  } catch (error) {
+    console.error('获取类别失败', error)
   }
-])
+}
+
+// 获取项目列表
+const getHeritageList = async () => {
+  loading.value = true
+  try {
+    const params = {
+      current: pageParams.value.current,
+      size: pageParams.value.size,
+      categoryId: selectValue.value || undefined, // 如果为空则不传，查询所有
+      status: 2 // 仅查询已发布的
+    }
+    const res = await getHeritagePageAPI(params)
+    if (res.code === '0' || res.code === 200 || !res.code) {
+      const data = res.data || res
+      tableData.value = data.records || []
+      total.value = data.total || 0
+    }
+  } catch (error) {
+    console.error('获取项目列表失败', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+// 监听筛选变化
+const handleFilterChange = () => {
+  pageParams.value.current = 1
+  getHeritageList()
+}
+
+// 监听分页变化
+const handlePageChange = (page) => {
+  pageParams.value.current = page
+  getHeritageList()
+}
+
+// 格式化时间
+const formatDate = (row) => {
+  if (!row.createTime) return ''
+  return new Date(row.createTime).toLocaleDateString()
+}
+
+// 当前选中类别的名称
+const currentCategoryName = computed(() => {
+  if (!selectValue.value) return '全部项目'
+  const option = selectOptions.value.find(opt => opt.value === selectValue.value)
+  return option ? option.label : '全部项目'
+})
+
+// 跳转详情
+const goToDetail = (row) => {
+  router.push(`/heri_detail?id=${row.id}`)
+}
+
+onMounted(() => {
+  getCategoryList()
+  getHeritageList()
+})
 </script>
 
 <template>
@@ -71,7 +111,13 @@ const tableData = ref([
     </div>
     <!-- 选择框及标题 -->
     <div class="select-title">
-      <el-select v-model="selectValue" placeholder="请选择分类" size="medium">
+      <el-select 
+        v-model="selectValue" 
+        placeholder="请选择分类" 
+        size="large"
+        clearable
+        @change="handleFilterChange"
+      >
         <el-option
           v-for="item in selectOptions"
           :key="item.value"
@@ -79,26 +125,58 @@ const tableData = ref([
           :value="item.value"
         />
       </el-select>
-      <span class="title">戏曲歌剧</span>
+      <span class="title">{{ currentCategoryName }}</span>
     </div>
     <!-- 主体表格 -->
     <div class="table">
-      <el-table :data="tableData" stripe style="width: 100%">
-        <el-table-column prop="itemName" label="项目名称" width="130" />
-        <el-table-column prop="date" label="项目时代" width="130" />
+      <el-table 
+        :data="tableData" 
+        stripe 
+        style="width: 100%" 
+        v-loading="loading"
+        @row-click="goToDetail"
+      >
+        <el-table-column prop="title" label="项目名称" width="180" />
+        <el-table-column prop="createTime" label="发布时间" width="130">
+          <template #default="scope">
+            {{ formatDate(scope.row) }}
+          </template>
+        </el-table-column>
         <el-table-column
-          prop="introduce"
+          prop="summary"
           label="项目简介"
-          width=""
           show-overflow-tooltip
         />
-        <el-table-column prop="itemImg" label="项目照片" width="170" />
-        <el-table-column width="80">转发</el-table-column>
+        <el-table-column label="项目照片" width="170">
+          <template #default="scope">
+            <el-image 
+              v-if="scope.row.coverImage"
+              style="width: 100px; height: 60px" 
+              :src="scope.row.coverImage" 
+              fit="cover"
+              preview-teleported
+              :preview-src-list="[scope.row.coverImage]"
+              @click.stop
+            />
+          </template>
+        </el-table-column>
+        <el-table-column width="80" label="操作">
+          <template #default>
+            <el-button link type="primary" @click.stop>转发</el-button>
+          </template>
+        </el-table-column>
       </el-table>
     </div>
     <!-- 分页 -->
     <div class="pagination">
-      <el-pagination background layout="prev, pager, next" :total="50" />
+      <el-pagination 
+        background 
+        layout="prev, pager, next" 
+        :total="total" 
+        :current-page="pageParams.current"
+        :page-size="pageParams.size"
+        @current-change="handlePageChange"
+      />
     </div>
   </div>
 </template>

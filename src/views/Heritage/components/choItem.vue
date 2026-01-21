@@ -1,16 +1,31 @@
-<script setup></script>
+<script setup>
+import { useRouter } from 'vue-router'
+
+const props = defineProps({
+  items: {
+    type: Array,
+    default: () => []
+  }
+})
+
+const router = useRouter()
+
+const goToDetail = (id) => {
+  router.push(`/heri_detail?id=${id}`)
+}
+</script>
 
 <template>
   <div class="exp_content">
-    <div class="exp_item" v-for="item of 4" :key="item">
-      <img src="@/assets/image/layout.jpg" />
+    <div class="exp_item" v-for="item in items" :key="item.id">
+      <img :src="item.coverImage || '@/assets/image/layout.jpg'" />
       <div class="text">
-        <h3>粤剧</h3>
+        <h3>{{ item.title }}</h3>
         <p>
-          按实际开发和凯撒客户尽快按返回键回复可见瓦活佛金飞达我离开家离回复可见瓦活佛金飞达我离开家离开
+          {{ item.summary }}
         </p>
         <span>
-          <span @click="$router.push('/heri_detail')">查看详情</span>
+          <span @click="goToDetail(item.id)">查看详情</span>
           <el-icon>
             <Star />
           </el-icon>

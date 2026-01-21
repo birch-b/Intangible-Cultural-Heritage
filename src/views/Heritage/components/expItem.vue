@@ -1,12 +1,38 @@
-<script setup></script>
+<script setup>
+import { useRouter } from 'vue-router'
+
+const props = defineProps({
+  items: {
+    type: Array,
+    default: () => []
+  }
+})
+
+const router = useRouter()
+
+const goToCategory = (id) => {
+  router.push({
+    path: '/heri_category',
+    query: { categoryId: id }
+  })
+}
+</script>
 
 <template>
   <div class="exp_content">
-    <div class="exp_item" v-for="item of 4" :key="item">
-      <img src="@/assets/image/layout.jpg" />
+    <div class="exp_item" v-for="item in items" :key="item.id">
+      <img :src="item.icon || '@/assets/image/layout.jpg'" />
       <div class="text">
-        <h3>传统技艺</h3>
-        <p>包括广绣、广式家具制作等</p>
+        <h3>{{ item.name }}</h3>
+        <p>
+          {{ item.description || '暂无简介' }}
+        </p>
+        <span>
+          <span @click="goToCategory(item.id)">查看该类</span>
+          <el-icon>
+            <Star />
+          </el-icon>
+        </span>
       </div>
     </div>
   </div>

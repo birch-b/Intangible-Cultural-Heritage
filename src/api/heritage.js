@@ -1,54 +1,34 @@
-import request from '@/utils/request'
+import http from '@/utils/request'
 
-// 分页查询非遗项目
-export const pageHeritageItem = (params) => {
-  return request({
+/**
+ * 获取非遗类别列表
+ */
+export const getCategoryListAPI = () => {
+  return http({
+    url: '/admin/v1/category/list',
+    method: 'GET'
+  })
+}
+
+/**
+ * 分页获取非遗项目列表
+ * @param {Object} params - 查询参数 { page, size, title, categoryId, status, isFeatured, region }
+ */
+export const getHeritagePageAPI = (params) => {
+  return http({
     url: '/admin/v1/heritage-item/page',
-    method: 'get',
+    method: 'GET',
     params
   })
 }
 
-// 获取非遗项目详情
-export const getHeritageItem = (id) => {
-  return request({
+/**
+ * 获取非遗项目详情
+ * @param {Long} id - 项目ID
+ */
+export const getHeritageDetailAPI = (id) => {
+  return http({
     url: `/admin/v1/heritage-item/${id}`,
-    method: 'get'
-  })
-}
-
-// 创建非遗项目
-export const createHeritageItem = (data) => {
-  return request({
-    url: '/admin/v1/heritage-item',
-    method: 'post',
-    data
-  })
-}
-
-// 更新非遗项目
-export const updateHeritageItem = (data) => {
-  return request({
-    url: '/admin/v1/heritage-item',
-    method: 'put',
-    data
-  })
-}
-
-// 删除非遗项目
-export const deleteHeritageItem = (id) => {
-  return request({
-    url: `/admin/v1/heritage-item/${id}`,
-    method: 'delete'
-  })
-}
-
-// 更新非遗项目状态
-// data: { id: number, status: number }
-export const updateHeritageItemStatus = (data) => {
-  return request({
-    url: '/admin/v1/heritage-item/status',
-    method: 'put',
-    data
+    method: 'GET'
   })
 }
