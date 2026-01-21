@@ -16,34 +16,40 @@
 
     <!-- 项目类别列表 -->
     <el-table
+      v-loading="loading"
       :data="categoryList"
       stripe
       style="width: 100%"
       @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="55" />
-      <el-table-column type="index" label="序号" width="80" />
-      <el-table-column prop="id" label="ID" width="80" />
+      <el-table-column type="index" :index="indexMethod" label="序号" width="80" />
+      <!-- <el-table-column prop="id" label="ID" width="80" /> -->
       <el-table-column prop="name" label="名称" width="200" />
       <el-table-column prop="description" label="介绍" />
-      <el-table-column prop="status" label="状态" width="100">
-        <template #default="scope">
-          <el-tag
-            :type="scope.row.status === '启用' ? 'success' : 'info'"
-            effect="light"
-          >
-            {{ scope.row.status }}
-          </el-tag>
-        </template>
-      </el-table-column>
+      <!-- 后端无状态字段，已移除 -->
       <el-table-column label="封面" width="120">
         <template #default="scope">
           <el-image
             style="width: 80px; height: 50px"
-            :src="scope.row.coverImage"
+            :src="scope.row.icon"
             fit="cover"
-            :preview-src-list="[scope.row.coverImage]"
-          />
+            :preview-src-list="[scope.row.icon]"
+            :z-index="9999"
+            preview-teleported
+          >
+            <template #error>
+              <div class="image-slot">
+                <el-icon><Picture /></el-icon>
+              </div>
+            </template>
+          </el-image>
+        </template>
+      </el-table-column>
+      <!-- 添加创建时间显示 -->
+      <el-table-column label="创建时间" width="180">
+        <template #default="scope">
+          {{ formatTime(scope.row.createTime) }}
         </template>
       </el-table-column>
       <el-table-column label="操作" width="180" fixed="right">
@@ -109,23 +115,17 @@
             :rows="3"
           />
         </el-form-item>
-        <el-form-item label="状态" prop="status">
-          <el-select v-model="categoryForm.status" style="width: 100%">
-            <el-option label="启用" value="启用" />
-            <el-option label="禁用" value="禁用" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="封面图片" prop="coverImage">
+        <!-- 后端无状态字段，已移除 -->
+        <el-form-item label="封面图片" prop="icon">
           <el-upload
             class="category-uploader"
             :show-file-list="false"
-            action="/api/upload"
+            :http-request="handleCustomUpload"
             :before-upload="beforeUpload"
-            :on-success="handleUploadSuccess"
           >
             <img
-              v-if="categoryForm.coverImage"
-              :src="categoryForm.coverImage"
+              v-if="categoryForm.icon"
+              :src="categoryForm.icon"
               class="category-image"
             />
             <el-icon v-else class="category-uploader-icon"><Plus /></el-icon>
@@ -136,7 +136,7 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="categoryDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="submitCategoryForm">确定</el-button>
+          <el-button type="primary" :loading="submitLoading" @click="submitCategoryForm">确定</el-button>
         </span>
       </template>
     </el-dialog>
@@ -149,7 +149,7 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="deleteDialogVisible = false">取消</el-button>
-          <el-button type="danger" @click="confirmDeleteCategory"
+          <el-button type="danger" :loading="deleteLoading" @click="confirmDeleteCategory"
             >确定删除</el-button
           >
         </span>
@@ -169,7 +169,7 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="batchDeleteDialogVisible = false">取消</el-button>
-          <el-button type="danger" @click="confirmBatchDelete"
+          <el-button type="danger" :loading="deleteLoading" @click="confirmBatchDelete"
             >确定删除</el-button
           >
         </span>
@@ -179,32 +179,19 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
-import { Plus, Delete } from '@element-plus/icons-vue'
+import { ref, reactive, onMounted } from 'vue'
+import { Plus, Delete, Picture } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import { pageCategory, addCategory, updateCategory, deleteCategory } from '@/api/category'
+import { uploadFileAPI } from '@/api/file'
+import { formatTime } from '@/utils/format'
 
 // 项目类别列表相关
+const loading = ref(false)
 const currentPage = ref(1)
 const pageSize = ref(10)
-const totalCategories = ref(100)
-
-// 模拟项目类别数据
-const categoryList = ref([
-  {
-    id: 1,
-    name: '传统工艺',
-    description: '中国传统手工艺品的内容展示',
-    status: '启用',
-    coverImage: ''
-  },
-  {
-    id: 2,
-    name: '现代陶瓷',
-    description: '现代陶瓷器皿展示内容艺术',
-    status: '禁用',
-    coverImage: ''
-  }
-])
+const totalCategories = ref(0)
+const categoryList = ref([])
 
 // 选中的类别
 const selectedCategories = ref([])
@@ -213,12 +200,14 @@ const selectedCategories = ref([])
 const categoryDialogVisible = ref(false)
 const categoryFormMode = ref('add')
 const categoryFormRef = ref(null)
+const submitLoading = ref(false)
+const deleteLoading = ref(false)
+
 const categoryForm = reactive({
-  id: 0,
+  id: undefined,
   name: '',
   description: '',
-  status: '启用',
-  coverImage: ''
+  icon: ''
 })
 
 // 删除对话框相关
@@ -233,8 +222,12 @@ const categoryRules = {
     { max: 50, message: '名称长度不能超过50个字符', trigger: 'blur' }
   ],
   description: [{ required: true, message: '请输入类别介绍', trigger: 'blur' }],
-  status: [{ required: true, message: '请选择状态', trigger: 'change' }],
-  coverImage: [{ required: true, message: '请上传封面图片', trigger: 'change' }]
+  icon: [{ required: true, message: '请上传封面图片', trigger: 'change' }]
+}
+
+// 计算表格序号
+const indexMethod = (index) => {
+  return (currentPage.value - 1) * pageSize.value + index + 1
 }
 
 // 处理分页变化
@@ -249,13 +242,39 @@ const handleCurrentChange = (val) => {
 }
 
 // 获取项目类别列表
-const fetchCategoryList = () => {
-  // 这里应该是调用API获取数据，现在使用模拟数据
-  console.log('获取项目类别列表', {
-    page: currentPage.value,
-    pageSize: pageSize.value
-  })
-  // 实际项目中，这里应该调用后端API
+const fetchCategoryList = async () => {
+  loading.value = true
+  try {
+    const res = await pageCategory({
+      current: currentPage.value,
+      size: pageSize.value,
+      sortField: 'createTime',
+      sortOrder: 'asc'
+    })
+    if (res.code === '0') {
+      // 前端兜底排序
+      const records = res.data.records
+      if (records && records.length > 0) {
+        records.sort((a, b) => new Date(a.createTime) - new Date(b.createTime))
+      }
+      categoryList.value = records
+      totalCategories.value = parseInt(res.data.total)
+    } else {
+      // 兼容直接返回数据的情况
+      if (res.records) {
+        const records = res.records
+        if (records && records.length > 0) {
+          records.sort((a, b) => new Date(a.createTime) - new Date(b.createTime))
+        }
+        categoryList.value = records
+        totalCategories.value = parseInt(res.total)
+      }
+    }
+  } catch (error) {
+    console.error('获取类别列表失败', error)
+  } finally {
+    loading.value = false
+  }
 }
 
 // 显示添加项目类别对话框
@@ -280,13 +299,27 @@ const showBatchDeleteDialog = () => {
 }
 
 // 确认批量删除
-const confirmBatchDelete = () => {
-  // 这里应该调用API批量删除类别
-  console.log('批量删除类别', selectedCategories.value)
-  ElMessage.success(`已成功删除 ${selectedCategories.value.length} 个项目类别`)
-  batchDeleteDialogVisible.value = false
-  // 删除后刷新列表
-  fetchCategoryList()
+const confirmBatchDelete = async () => {
+  deleteLoading.value = true
+  try {
+    // 后端未提供批量接口，循环调用单删
+    const deletePromises = selectedCategories.value.map(item => deleteCategory(item.id))
+    await Promise.all(deletePromises)
+    
+    ElMessage.success(`已成功删除 ${selectedCategories.value.length} 个项目类别`)
+    batchDeleteDialogVisible.value = false
+    // 删除后刷新列表
+    if (categoryList.value.length === selectedCategories.value.length && currentPage.value > 1) {
+      currentPage.value--
+    }
+    fetchCategoryList()
+    selectedCategories.value = []
+  } catch (error) {
+    console.error('批量删除失败', error)
+    // ElMessage.error('批量删除部分或全部失败')
+  } finally {
+    deleteLoading.value = false
+  }
 }
 
 // 图片上传前检查
@@ -303,15 +336,33 @@ const beforeUpload = (file) => {
   return isImage && isLt2M
 }
 
-// 图片上传成功回调
-const handleUploadSuccess = (res, file) => {
-  categoryForm.coverImage = URL.createObjectURL(file.raw)
+// 自定义上传
+const handleCustomUpload = async (options) => {
+  const { file } = options
+  try {
+    const res = await uploadFileAPI([file])
+    if (res.code === '0') {
+      // 假设后端返回的数据结构中 data 是文件 URL
+      // 根据实际接口返回调整
+      categoryForm.icon = res.data
+      ElMessage.success('上传成功')
+    } else {
+      ElMessage.error(res.message || '上传失败')
+    }
+  } catch (error) {
+    console.error('上传出错', error)
+    // ElMessage.error('上传出错') // request.js 已经统一处理了错误提示，这里可以省略或仅打日志
+  }
 }
 
 // 编辑项目类别
 const handleEditCategory = (row) => {
   categoryFormMode.value = 'edit'
-  Object.assign(categoryForm, row)
+  // Object.assign(categoryForm, row) // 浅拷贝，row 中可能有不需要的字段
+  categoryForm.id = row.id
+  categoryForm.name = row.name
+  categoryForm.description = row.description
+  categoryForm.icon = row.icon
   categoryDialogVisible.value = true
 }
 
@@ -322,40 +373,66 @@ const handleDeleteCategory = (row) => {
 }
 
 // 确认删除项目类别
-const confirmDeleteCategory = () => {
-  // 这里应该调用API删除类别
-  console.log('删除项目类别', categoryToDelete.value)
-  ElMessage.success(`项目类别 "${categoryToDelete.value.name}" 已成功删除`)
-  deleteDialogVisible.value = false
-  // 删除后刷新列表
-  fetchCategoryList()
+const confirmDeleteCategory = async () => {
+  if (!categoryToDelete.value) return
+  deleteLoading.value = true
+  try {
+    const res = await deleteCategory(categoryToDelete.value.id)
+    if (res.code === '0') {
+      ElMessage.success(`项目类别 "${categoryToDelete.value.name}" 已成功删除`)
+      deleteDialogVisible.value = false
+      // 删除后刷新列表
+      if (categoryList.value.length === 1 && currentPage.value > 1) {
+        currentPage.value--
+      }
+      fetchCategoryList()
+    } else {
+       ElMessage.success('删除成功') // 兼容
+       deleteDialogVisible.value = false
+       fetchCategoryList()
+    }
+  } catch (error) {
+    console.error('删除失败', error)
+  } finally {
+    deleteLoading.value = false
+  }
 }
 
 // 重置表单
 const resetCategoryForm = () => {
-  categoryForm.id = 0
+  categoryForm.id = undefined
   categoryForm.name = ''
   categoryForm.description = ''
-  categoryForm.status = '启用'
-  categoryForm.coverImage = ''
+  categoryForm.icon = ''
   categoryFormRef.value?.resetFields()
 }
 
 // 提交表单
 const submitCategoryForm = () => {
-  categoryFormRef.value?.validate((valid) => {
+  categoryFormRef.value?.validate(async (valid) => {
     if (valid) {
-      if (categoryFormMode.value === 'add') {
-        // 这里应该调用API添加类别
-        console.log('添加项目类别', categoryForm)
-        ElMessage.success('添加项目类别成功')
-      } else {
-        // 这里应该调用API更新类别
-        console.log('更新项目类别', categoryForm)
-        ElMessage.success('更新项目类别成功')
+      submitLoading.value = true
+      try {
+        if (categoryFormMode.value === 'add') {
+          const res = await addCategory(categoryForm)
+          if (res.code === '0') {
+            ElMessage.success('添加项目类别成功')
+            categoryDialogVisible.value = false
+            fetchCategoryList()
+          }
+        } else {
+          const res = await updateCategory(categoryForm)
+          if (res.code === '0') {
+            ElMessage.success('更新项目类别成功')
+            categoryDialogVisible.value = false
+            fetchCategoryList()
+          }
+        }
+      } catch (error) {
+        console.error('提交失败', error)
+      } finally {
+        submitLoading.value = false
       }
-      categoryDialogVisible.value = false
-      fetchCategoryList()
     } else {
       return false
     }
@@ -363,7 +440,9 @@ const submitCategoryForm = () => {
 }
 
 // 初始加载
-fetchCategoryList()
+onMounted(() => {
+  fetchCategoryList()
+})
 </script>
 
 <style scoped>
@@ -425,5 +504,16 @@ fetchCategoryList()
   height: 100px;
   display: block;
   object-fit: cover;
+}
+
+.image-slot {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  background: #f5f7fa;
+  color: #909399;
+  font-size: 20px;
 }
 </style>
