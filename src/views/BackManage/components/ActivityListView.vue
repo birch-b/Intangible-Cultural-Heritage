@@ -31,6 +31,8 @@
             :src="scope.row.image"
             :preview-src-list="[scope.row.image]"
             fit="cover"
+            :z-index="9999"
+            preview-teleported
           />
         </template>
       </el-table-column>

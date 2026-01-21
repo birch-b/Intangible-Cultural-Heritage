@@ -74,6 +74,7 @@
                 :preview-src-list="scope.row.images"
                 fit="cover"
                 preview-teleported
+                :z-index="9999"
               />
               <div
                 v-if="scope.row.images.length > 1"
