@@ -6,27 +6,29 @@ import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
 
 // https://vite.dev/config/
-export default defineConfig({
-  base: '/gric/', // 部署到 /gric/ 子路径下
-  plugins: [vue(), vueDevTools()],
-  resolve: {
-    alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
-    }
-  },
-  server: {
-    proxy: {
-      '/api': {
-        target: 'http://localhost:30002',
-        changeOrigin: true
-      },
-      '/uploads': {
-        target: 'http://localhost:30002',
-        changeOrigin: true
-      },
-      '/gric/uploads': {
-        target: 'http://localhost:30002',
-        changeOrigin: true
+export default defineConfig(({ command, mode }) => {
+  return {
+    base: mode === 'production' ? '/gric/' : '/', // 开发环境使用 /，生产环境使用 /gric/
+    plugins: [vue(), vueDevTools()],
+    resolve: {
+      alias: {
+        '@': fileURLToPath(new URL('./src', import.meta.url))
+      }
+    },
+    server: {
+      proxy: {
+        '/api': {
+          target: 'http://localhost:30002',
+          changeOrigin: true
+        },
+        '/uploads': {
+          target: 'http://localhost:30002',
+          changeOrigin: true
+        },
+        '/gric/uploads': {
+          target: 'http://localhost:30002',
+          changeOrigin: true
+        }
       }
     }
   }

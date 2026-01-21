@@ -1,8 +1,10 @@
-<script setup></script>
+<script setup>
+const mapUrl = `${import.meta.env.BASE_URL}3d.html`
+</script>
 
 <template>
   <div class="fullscreen-container">
-    <iframe src="/public/3d.html" class="fullscreen-iframe"> </iframe>
+    <iframe :src="mapUrl" class="fullscreen-iframe"> </iframe>
   </div>
 </template>
 
