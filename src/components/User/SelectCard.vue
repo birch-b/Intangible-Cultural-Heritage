@@ -79,17 +79,28 @@ onMounted(() => {
     istrue: `/${item.name}` === currentPath
   }))
 })
+
+// 检查权限
+const checkPermission = (item) => {
+  if (item.name === 'backmanage') {
+    const role = userStore.userInfo?.role
+    // 角色为1或2时显示
+    return role == 1 || role == 2
+  }
+  return true
+}
 </script>
 <template>
-  <div
-    v-for="(item, index) in lists"
-    :key="index"
-    class="card"
-    @click="navigater(item.name, index)"
-    :class="{ active: item.istrue }"
-  >
-    <p><i :class="`iconfont ${item.icon}`"></i>{{ item.text }}</p>
-  </div>
+  <template v-for="(item, index) in lists" :key="index">
+    <div
+      v-if="checkPermission(item)"
+      class="card"
+      @click="navigater(item.name, index)"
+      :class="{ active: item.istrue }"
+    >
+      <p><i :class="`iconfont ${item.icon}`"></i>{{ item.text }}</p>
+    </div>
+  </template>
 </template>
 <style lang="scss" scoped>
 .active {
