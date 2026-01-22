@@ -1,10 +1,34 @@
-<script setup></script>
+<script setup>
+import { useRouter } from 'vue-router'
+
+const props = defineProps({
+  items: {
+    type: Array,
+    default: () => []
+  }
+})
+
+const router = useRouter()
+
+const goToDetail = (id) => {
+  router.push(`/act_detail?id=${id}`)
+}
+</script>
 
 <template>
   <div class="act">
-    <div class="actItem" v-for="item of 4" :key="item">
-      <img src="@/assets/image/layout.jpg" />
-      <h4>2025广东非遗文化交流展演活动</h4>
+    <div 
+      class="actItem" 
+      v-for="item in items" 
+      :key="item.id"
+      @click="goToDetail(item.id)"
+      style="cursor: pointer;"
+    >
+      <img :src="item.coverImage || '@/assets/image/layout.jpg'" />
+      <h4>{{ item.title }}</h4>
+    </div>
+    <div v-if="items.length === 0" style="width: 100%; text-align: center; color: #999;">
+      暂无相关活动
     </div>
   </div>
 </template>
@@ -12,31 +36,40 @@
 <style scoped lang="scss">
 .act {
   width: 100%;
-  height: 85%;
+  height: auto;
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 20px;
   // padding: 20px;
 
   .actItem {
     width: 22%;
-    height: 85%;
+    height: auto;
     display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    margin-bottom: 20px;
 
     img {
       width: 100%;
-      height: 78%;
+      height: 150px;
+      object-fit: cover;
       border-radius: 5px;
     }
 
     h4 {
       width: 100%;
-      height: 18%;
+      height: auto;
       font-size: 14px;
+      margin-top: 10px;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      overflow: hidden;
     }
   }
 }

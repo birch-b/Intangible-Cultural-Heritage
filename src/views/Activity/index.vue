@@ -1,6 +1,37 @@
 <script setup>
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import ExpItem from './components/ExpItem.vue'
 import ActItem from './components/ActItem.vue'
+import { pageActivity } from '@/api/heritageActivity'
+
+const router = useRouter()
+const newsList = ref([])
+const activityList = ref([])
+
+// 获取活动数据
+const getActivities = async () => {
+  try {
+    // 获取最新6条，不区分类型，状态为已发布
+    const res = await pageActivity({ current: 1, size: 6, status: 1 })
+    if (res.code === '0' || res.code === 200 || !res.code) {
+      const list = res.data?.records || []
+      newsList.value = list // 非遗要闻用完整列表
+      activityList.value = list.slice(0, 4) // 相关活动取前4条
+    }
+  } catch (error) {
+    console.error('获取活动失败', error)
+  }
+}
+
+// 跳转到全部分类
+const goToCategory = () => {
+  router.push('/act_category')
+}
+
+onMounted(() => {
+  getActivities()
+})
 </script>
 
 <template>
@@ -16,12 +47,13 @@ import ActItem from './components/ActItem.vue'
   <div class="container">
     <div class="explore">
       <h2>非遗要闻</h2>
-      <p>查看全部></p>
-      <ExpItem />
+      <p @click="goToCategory" style="cursor: pointer;">查看全部></p>
+      <!-- 传递数据给子组件 -->
+      <ExpItem :items="newsList" />
     </div>
     <div class="choiceness">
       <h2>相关活动</h2>
-      <ActItem />
+      <ActItem :items="activityList" />
     </div>
   </div>
 </template>
