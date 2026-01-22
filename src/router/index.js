@@ -109,6 +109,19 @@ const router = createRouter({
       path: '/heri_category',
       component: () =>
         import('@/views/Heritage/components/HeritageCategory.vue')
+    },
+
+    // 活动详情-一级路由
+    {
+      path: '/act_detail',
+      component: () => import('@/views/Activity/components/ActivityDetail.vue')
+    },
+
+    // 活动分类-一级路由
+    {
+      path: '/act_category',
+      component: () =>
+        import('@/views/Activity/components/ActivityCategory.vue')
     }
   ]
 })

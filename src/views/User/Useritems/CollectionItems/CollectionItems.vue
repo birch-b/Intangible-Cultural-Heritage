@@ -1,13 +1,36 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import CollectCard from '@/components/User/CollectCard.vue'
-const onePage = ref(9)
+import { getHeritageCollectionPageAPI } from '@/api/heritage'
+
+const collectionList = ref([])
+const currentPage = ref(1)
+const pageSize = ref(10)
+const total = ref(0)
+
+const getCollectionList = async () => {
+  const res = await getHeritageCollectionPageAPI({
+    current: currentPage.value,
+    size: pageSize.value
+  })
+  if (res.code === '0') {
+    collectionList.value = res.data.records
+    total.value = parseInt(res.data.total)
+  }
+}
+
 const handleSizeChange = (val) => {
-  onePage.value = val
+  pageSize.value = val
+  getCollectionList()
 }
 const handleCurrentChange = (val) => {
-  console.log(`current page: ${val}`)
+  currentPage.value = val
+  getCollectionList()
 }
+
+onMounted(() => {
+  getCollectionList()
+})
 </script>
 
 <!-- 收藏项目 -->
@@ -21,22 +44,21 @@ const handleCurrentChange = (val) => {
       </el-header>
       <el-main>
         <div class="container">
-          <div class="card" v-for="item in onePage" :key="item">
-            <CollectCard></CollectCard>
+          <div class="card" v-for="item in collectionList" :key="item.id">
+            <CollectCard :item="item"></CollectCard>
           </div>
         </div>
       </el-main>
       <el-footer>
         <div class="pagination">
           <el-pagination
-            v-model:current-page="currentPage4"
-            v-model:page-size="pageSize4"
+            v-model:current-page="currentPage"
+            v-model:page-size="pageSize"
             :page-sizes="[4, 6, 8, 10, 12]"
             size="large"
-            :disabled="disabled"
-            background="false"
+            background
             layout="total, sizes, prev, pager, next, jumper"
-            :total="100"
+            :total="total"
             @size-change="handleSizeChange"
             @current-change="handleCurrentChange"
           />
