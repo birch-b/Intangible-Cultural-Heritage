@@ -160,11 +160,6 @@ onMounted(() => {
             />
           </template>
         </el-table-column>
-        <el-table-column width="80" label="操作">
-          <template #default>
-            <el-button link type="primary" @click.stop>转发</el-button>
-          </template>
-        </el-table-column>
       </el-table>
     </div>
     <!-- 分页 -->

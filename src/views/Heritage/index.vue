@@ -111,21 +111,24 @@ onMounted(() => {
 
 .container {
   width: 100vw;
-  height: 105vh;
+  height: auto;
+  min-height: 100vh;
   margin: 0 auto;
+  padding-bottom: 50px;
   background-color: #e7eef7;
 
   h2 {
     color: #2b3543;
     font-weight: normal;
+    margin-bottom: 20px;
   }
 
   .explore {
     width: 80%;
-    height: 44%;
-    padding: 0.5vh 0;
+    height: auto;
+    padding: 20px 0 40px 0;
     border-bottom: 2px solid #cccccc;
-    margin: 0 auto;
+    margin: 0 auto 30px auto;
     position: relative;
 
     p {
@@ -133,13 +136,13 @@ onMounted(() => {
       // 鼠标
       cursor: pointer;
       right: 0;
-      top: 3vh;
+      top: 25px;
     }
   }
 
   .choiceness {
     width: 80%;
-    height: 54%;
+    height: auto;
     margin: 0 auto;
   }
 }

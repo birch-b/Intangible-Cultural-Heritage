@@ -1,12 +1,20 @@
 <script setup>
-import { ArrowRight } from '@element-plus/icons-vue'
+import { ArrowRight, Star, StarFilled } from '@element-plus/icons-vue'
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { getHeritageDetailAPI } from '@/api/heritage'
+import { 
+  getHeritageDetailAPI, 
+  addHeritageCollectionAPI, 
+  cancelHeritageCollectionAPI, 
+  checkHeritageCollectionAPI 
+} from '@/api/heritage'
+import { ElMessage } from 'element-plus'
 
 const route = useRoute()
 const detail = ref({})
 const loading = ref(false)
+const isCollected = ref(false)
+const collectLoading = ref(false)
 
 const getDetail = async () => {
   const id = route.query.id
@@ -16,11 +24,49 @@ const getDetail = async () => {
     const res = await getHeritageDetailAPI(id)
     if (res.code === '0' || res.code === 200 || !res.code) {
       detail.value = res.data || res
+      checkCollection(id)
     }
   } catch (e) {
     console.error(e)
   } finally {
     loading.value = false
+  }
+}
+
+const checkCollection = async (id) => {
+  try {
+    const res = await checkHeritageCollectionAPI(id)
+    if (res.code === '0') {
+      isCollected.value = res.data
+    }
+  } catch (e) {
+    console.error(e)
+  }
+}
+
+const toggleCollect = async () => {
+  if (!detail.value.id) return
+  collectLoading.value = true
+  try {
+    const data = { heritageItemId: detail.value.id }
+    if (isCollected.value) {
+      const res = await cancelHeritageCollectionAPI(data)
+      if (res.code === '0') {
+        isCollected.value = false
+        ElMessage.success('已取消收藏')
+      }
+    } else {
+      const res = await addHeritageCollectionAPI(data)
+      if (res.code === '0') {
+        isCollected.value = true
+        ElMessage.success('收藏成功')
+      }
+    }
+  } catch (e) {
+    console.error(e)
+    ElMessage.error('操作失败')
+  } finally {
+    collectLoading.value = false
   }
 }
 
@@ -57,7 +103,18 @@ onMounted(() => {
         <div v-else class="no-image">暂无图片</div>
       </div>
       <div class="right_text">
-        <h1 class="item-title">{{ detail.title }}</h1>
+        <div class="title-row">
+          <h1 class="item-title">{{ detail.title }}</h1>
+          <el-button 
+            type="warning" 
+            :icon="isCollected ? StarFilled : Star" 
+            circle 
+            size="large"
+            @click="toggleCollect"
+            :loading="collectLoading"
+            title="收藏"
+          />
+        </div>
         <div class="item-meta">
           <span v-if="detail.region">地区：{{ detail.region }}</span>
           <span v-if="detail.createTime">发布时间：{{ new Date(detail.createTime).toLocaleDateString() }}</span>
@@ -133,10 +190,17 @@ onMounted(() => {
       overflow-y: auto;
       color: #333;
 
-      .item-title {
-        font-size: 24px;
+      .title-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         margin-bottom: 10px;
-        color: #88393c;
+
+        .item-title {
+          font-size: 24px;
+          margin: 0;
+          color: #88393c;
+        }
       }
 
       .item-meta {

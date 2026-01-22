@@ -71,3 +71,53 @@ export const deleteHeritageItem = (id) => {
     method: 'DELETE'
   })
 }
+
+// ================= 收藏相关接口 =================
+
+/**
+ * 添加收藏
+ * @param {Object} data { heritageItemId }
+ */
+export const addHeritageCollectionAPI = (data) => {
+  return http({
+    url: '/admin/v1/collection/heritage',
+    method: 'POST',
+    data
+  })
+}
+
+/**
+ * 取消收藏
+ * @param {Object} data { heritageItemId }
+ */
+export const cancelHeritageCollectionAPI = (data) => {
+  return http({
+    url: '/admin/v1/collection/heritage/cancel',
+    method: 'POST',
+    data
+  })
+}
+
+/**
+ * 分页获取我的收藏
+ * @param {Object} params { current, size }
+ */
+export const getHeritageCollectionPageAPI = (params) => {
+  return http({
+    url: '/admin/v1/collection/heritage/page',
+    method: 'GET',
+    params
+  })
+}
+
+/**
+ * 检查是否已收藏
+ * @param {Long} heritageItemId
+ */
+export const checkHeritageCollectionAPI = (heritageItemId) => {
+  return http({
+    url: '/admin/v1/collection/heritage/check',
+    method: 'GET',
+    params: { heritageItemId }
+  })
+}

@@ -29,9 +29,6 @@ const goToCategory = (id) => {
         </p>
         <span>
           <span @click="goToCategory(item.id)">查看该类</span>
-          <el-icon>
-            <Star />
-          </el-icon>
         </span>
       </div>
     </div>
@@ -42,48 +39,78 @@ const goToCategory = (id) => {
 .exp_content {
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 20px;
+  width: 100%;
+  padding: 10px 0;
 
   .exp_item {
-    width: 23%;
-    height: 35vh;
-    margin: 1vh 0;
+    width: calc((100% - 60px) / 4);
+    height: auto;
+    margin-bottom: 20px;
     background-color: #fff;
     overflow: hidden;
     border-radius: 8px;
     display: flex;
-    flex-wrap: wrap;
-    justify-content: space-around;
+    flex-direction: column;
+    transition: transform 0.3s;
+
+    &:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
 
     img {
       width: 100%;
-      height: 24vh;
+      height: 200px;
+      object-fit: cover;
     }
 
     .text {
       width: 100%;
-      height: 11vh;
-      padding: 0 1vw;
+      height: auto;
+      padding: 15px;
       display: flex;
-      flex-wrap: wrap;
-      align-items: center;
+      flex-direction: column;
+      gap: 10px;
       background-color: #fff;
+
+      h3 {
+        width: 100%;
+        font-size: 16px;
+        font-weight: 600;
+        margin: 0;
+        line-height: 1.4;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
 
       p {
         width: 100%;
-        display: block;
-        height: 3em;
+        font-size: 14px;
+        color: #666;
+        line-height: 1.5;
+        margin: 0;
         display: -webkit-box;
-        /* 使用弹性盒子布局 */
         -webkit-line-clamp: 2;
-        /* 限制为两行 */
         -webkit-box-orient: vertical;
-        /* 设置盒子内的元素排列方向 */
-        // 省略号
         overflow: hidden;
         text-overflow: ellipsis;
-        color: #9799a0;
+        height: 42px;
+      }
+
+      span {
+        font-size: 14px;
         font-weight: 500;
+        color: #b38765;
+        cursor: pointer;
+        text-align: right;
+        margin-top: 5px;
+
+        &:hover {
+          text-decoration: underline;
+        }
       }
     }
   }
