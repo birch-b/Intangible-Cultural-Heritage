@@ -219,7 +219,8 @@ import {
   pageHeritageItem,
   createHeritageItem,
   updateHeritageItem,
-  deleteHeritageItem
+  deleteHeritageItem,
+  getHeritageDetailAPI
 } from '@/api/heritage'
 import { listAllCategory } from '@/api/category'
 import { uploadFileAPI } from '@/api/file'
@@ -344,12 +345,29 @@ const showAddDialog = () => {
 }
 
 // 编辑
-const handleEdit = (row) => {
+const handleEdit = async (row) => {
   formMode.value = 'edit'
+  // 先重置表单，避免旧数据残留
+  resetForm()
+  
+  // 基础数据回显
   Object.assign(form, row)
-  // 确保 status 是数字
   form.status = Number(row.status)
+  
+  // 打开弹窗（此时可能 content 为空）
   dialogVisible.value = true
+  
+  // 调用详情接口获取完整数据（主要是 content）
+  try {
+    const res = await getHeritageDetailAPI(row.id)
+    if (res.code === '0' && res.data) {
+      Object.assign(form, res.data)
+      form.status = Number(res.data.status)
+    }
+  } catch (error) {
+    console.error('获取项目详情失败', error)
+    ElMessage.warning('获取详细信息失败，请重试: ' + (error.message || '未知错误'))
+  }
 }
 
 // 重置表单
