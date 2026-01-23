@@ -66,7 +66,7 @@
               </el-icon>
               <span class="ml-2">教育培训管理</span>
             </template>
-            <el-menu-item index="6-1">培训课程管理</el-menu-item>
+            <el-menu-item index="6-1">非遗资源管理</el-menu-item>
             <el-menu-item index="6-2">培训报名管理</el-menu-item>
           </el-sub-menu>
           <!-- 审核与反馈管理 -->
@@ -143,7 +143,7 @@ import CategoryView from './components/CategoryView.vue'
 import DetailView from './components/DetailView.vue'
 import ActivityListView from './components/ActivityListView.vue'
 import ActivityCategoryView from './components/ActivityCategoryView.vue'
-import TrainingCourseView from './components/TrainingCourseView.vue'
+import HeritageMediaView from './components/HeritageMediaView.vue'
 import TrainingRegistrationView from './components/TrainingRegistrationView.vue'
 import UserFeedbackView from './components/UserFeedbackView.vue'
 
@@ -172,8 +172,8 @@ const currentComponent = computed(() => {
       return ActivityListView
     case 'ActivityCategoryView':
       return ActivityCategoryView
-    case 'TrainingCourseView':
-      return TrainingCourseView
+    case 'HeritageMediaView':
+      return HeritageMediaView
     case 'TrainingRegistrationView':
       return TrainingRegistrationView
     case 'UserFeedbackView':
@@ -211,7 +211,7 @@ const handleMenuSelect = (index) => {
       currentView.value = 'ActivityCategoryView'
       break
     case '6-1':
-      currentView.value = 'TrainingCourseView'
+      currentView.value = 'HeritageMediaView'
       break
     case '6-2':
       currentView.value = 'TrainingRegistrationView'

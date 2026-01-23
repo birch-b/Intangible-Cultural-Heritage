@@ -33,6 +33,10 @@ const router = createRouter({
           component: () => import('@/views/Education/index.vue')
         },
         {
+          path: 'education/resource/:id',
+          component: () => import('@/views/Education/ResourceDetail.vue')
+        },
+        {
           path: 'feedback',
           component: () => import('@/views/Feedback/index.vue')
         }

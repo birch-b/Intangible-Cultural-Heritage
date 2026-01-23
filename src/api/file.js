@@ -1,7 +1,7 @@
 import request from '@/utils/request'
 
 // 上传文件
-export const uploadFileAPI = (files) => {
+export const uploadFileAPI = (files, onUploadProgress) => {
   const formData = new FormData()
   // files 是一个数组
   files.forEach((file) => {
@@ -13,6 +13,7 @@ export const uploadFileAPI = (files) => {
     data: formData,
     headers: {
       'Content-Type': 'multipart/form-data'
-    }
+    },
+    onUploadProgress
   })
 }
