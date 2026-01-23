@@ -3,9 +3,21 @@ import { ref, onMounted } from 'vue'
 import ExpItem from './components/ExpItem.vue'
 import ChoItem from './components/ChoItem.vue'
 import { getHeritagePageAPI, getCategoryListAPI } from '@/api/heritage'
+import { getBannerListAPI } from '@/api/banner'
 
 const exploreItems = ref([])
 const featuredItems = ref([])
+const banners = ref([])
+
+// 获取轮播图
+const getBanners = async () => {
+  try {
+    const res = await getBannerListAPI('HERITAGE')
+    banners.value = res.filter(item => item.status === '启用').sort((a, b) => a.sort - b.sort)
+  } catch (error) {
+    console.error('获取轮播图失败', error)
+  }
+}
 
 // 获取探索非遗（获取前4个分类）
 const getExploreItems = async () => {
@@ -44,13 +56,19 @@ const getFeaturedItems = async () => {
 onMounted(() => {
   getExploreItems()
   getFeaturedItems()
+  getBanners()
 })
 </script>
 
 <template>
   <!-- 轮播图 -->
   <div class="carousel">
-    <el-carousel>
+    <el-carousel v-if="banners.length > 0">
+      <el-carousel-item v-for="item in banners" :key="item.id">
+        <img :src="item.imageUrl" />
+      </el-carousel-item>
+    </el-carousel>
+    <el-carousel v-else>
       <el-carousel-item v-for="item in 3" :key="item">
         <img src="@/assets/image/layout.jpg" />
       </el-carousel-item>

@@ -4,15 +4,6 @@
       <div class="card-header">
         <span>轮播图管理</span>
         <div class="header-actions">
-          <el-input
-            v-model="carouselSearchQuery"
-            placeholder="请输入轮播图名称"
-            class="search-input"
-          >
-            <template #append>
-              <el-button :icon="Search" @click="searchCarousels" />
-            </template>
-          </el-input>
           <el-button type="primary" @click="showAddCarouselDialog">
             <el-icon><Plus /></el-icon>新增
           </el-button>
@@ -22,7 +13,7 @@
 
     <!-- 轮播图列表 -->
     <el-table :data="carouselList" stripe style="width: 100%">
-      <el-table-column prop="id" label="ID" width="80" />
+      <el-table-column type="index" :index="indexMethod" label="序号" width="80" />
       <el-table-column label="图片" width="120">
         <template #default="scope">
           <el-image
@@ -35,9 +26,7 @@
           />
         </template>
       </el-table-column>
-      <el-table-column prop="title" label="标题" />
       <el-table-column prop="sort" label="排序" width="80" />
-      <el-table-column prop="linkUrl" label="链接地址" />
       <el-table-column prop="status" label="状态" width="100">
         <template #default="scope">
           <el-tag
@@ -48,7 +37,11 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="createTime" label="创建时间" width="180" />
+      <el-table-column prop="createTime" label="创建时间">
+        <template #default="scope">
+          {{ formatTime(scope.row.createTime) }}
+        </template>
+      </el-table-column>
       <el-table-column label="操作" width="180">
         <template #default="scope">
           <el-button
@@ -95,14 +88,8 @@
         ref="carouselFormRef"
         label-width="100px"
       >
-        <el-form-item label="标题" prop="title">
-          <el-input v-model="carouselForm.title" />
-        </el-form-item>
         <el-form-item label="排序" prop="sort">
           <el-input-number v-model="carouselForm.sort" :min="1" />
-        </el-form-item>
-        <el-form-item label="链接地址" prop="linkUrl">
-          <el-input v-model="carouselForm.linkUrl" />
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-select v-model="carouselForm.status" style="width: 100%">
@@ -113,17 +100,22 @@
         <el-form-item label="轮播图片" prop="imageUrl">
           <el-upload
             class="carousel-uploader"
+            drag
             :show-file-list="false"
-            action="/api/upload"
+            :http-request="handleCustomUpload"
             :before-upload="beforeUpload"
-            :on-success="handleUploadSuccess"
           >
             <img
               v-if="carouselForm.imageUrl"
               :src="carouselForm.imageUrl"
               class="carousel-image"
             />
-            <el-icon v-else class="carousel-uploader-icon"><Plus /></el-icon>
+            <div v-else class="el-upload__text">
+              <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+              <div class="el-upload__text">
+                Drop file here or <em>click to upload</em>
+              </div>
+            </div>
           </el-upload>
           <div class="el-upload__tip">只能上传jpg/png文件，且不超过2MB</div>
         </el-form-item>
@@ -139,7 +131,7 @@
     <!-- 删除确认对话框 -->
     <el-dialog v-model="deleteDialogVisible" title="删除确认" width="400px">
       <p>
-        确定要删除轮播图 "{{ carouselToDelete.title }}" 吗？此操作不可撤销。
+        确定要删除此轮播图吗？此操作不可撤销。
       </p>
       <template #footer>
         <span class="dialog-footer">
@@ -154,37 +146,20 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
-import { Search, Plus } from '@element-plus/icons-vue'
+import { ref, reactive, onMounted } from 'vue'
+import { Search, Plus, UploadFilled } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import { formatTime } from '@/utils/format'
+import { uploadFileAPI } from '@/api/file'
+import { pageBannerAPI, saveBannerAPI, deleteBannerAPI } from '@/api/banner'
 
 // 轮播图列表相关
 const carouselSearchQuery = ref('')
 const currentPage = ref(1)
 const pageSize = ref(10)
-const totalCarousels = ref(2)
-
-// 模拟轮播图数据
-const carouselList = ref([
-  {
-    id: 1,
-    title: '官方主题展示',
-    imageUrl: '/path/to/image1.jpg',
-    sort: 1,
-    linkUrl: '/products/1',
-    status: '启用',
-    createTime: '2024-01-20 10:30:00'
-  },
-  {
-    id: 2,
-    title: '新品发布展示',
-    imageUrl: '/path/to/image2.jpg',
-    sort: 2,
-    linkUrl: '/products/new',
-    status: '禁用',
-    createTime: '2024-01-19 15:45:00'
-  }
-])
+const totalCarousels = ref(0)
+const carouselList = ref([])
+const loading = ref(false)
 
 // 对话框相关
 const carouselDialogVisible = ref(false)
@@ -192,10 +167,8 @@ const carouselFormMode = ref('add')
 const carouselFormRef = ref(null)
 const carouselForm = reactive({
   id: 0,
-  title: '',
   imageUrl: '',
   sort: 1,
-  linkUrl: '',
   status: '启用'
 })
 
@@ -205,14 +178,14 @@ const carouselToDelete = ref(null)
 
 // 表单验证规则
 const carouselRules = {
-  title: [
-    { required: true, message: '请输入轮播图标题', trigger: 'blur' },
-    { max: 50, message: '标题长度不能超过50个字符', trigger: 'blur' }
-  ],
   sort: [{ required: true, message: '请输入排序号', trigger: 'blur' }],
-  linkUrl: [{ required: true, message: '请输入链接地址', trigger: 'blur' }],
   status: [{ required: true, message: '请选择状态', trigger: 'change' }],
   imageUrl: [{ required: true, message: '请上传轮播图片', trigger: 'change' }]
+}
+
+// 计算表格序号
+const indexMethod = (index) => {
+  return (currentPage.value - 1) * pageSize.value + index + 1
 }
 
 // 处理分页变化
@@ -227,14 +200,23 @@ const handleCurrentChange = (val) => {
 }
 
 // 获取轮播图列表
-const fetchCarouselList = () => {
-  // 这里应该是调用API获取数据，现在使用模拟数据
-  console.log('获取轮播图列表', {
-    page: currentPage.value,
-    pageSize: pageSize.value,
-    query: carouselSearchQuery.value
-  })
-  // 实际项目中，这里应该调用后端API
+const fetchCarouselList = async () => {
+  loading.value = true
+  try {
+    const data = await pageBannerAPI({
+      current: currentPage.value,
+      size: pageSize.value,
+      type: 'HOME'
+    })
+    
+    carouselList.value = data.records || []
+    totalCarousels.value = data.total || 0
+  } catch (error) {
+    console.error('获取轮播图失败', error)
+    ElMessage.error('获取轮播图失败')
+  } finally {
+    loading.value = false
+  }
 }
 
 // 搜索轮播图
@@ -264,9 +246,35 @@ const beforeUpload = (file) => {
   return isImage && isLt2M
 }
 
-// 图片上传成功回调
-const handleUploadSuccess = (res, file) => {
-  carouselForm.imageUrl = URL.createObjectURL(file.raw)
+// 自定义上传
+const handleCustomUpload = async (options) => {
+  try {
+    const res = await uploadFileAPI([options.file])
+    // 假设后端返回格式为 { code: 200, data: 'url' } 或直接返回 url
+    // 根据 file.js，它返回 request，通常 request 拦截器会处理响应
+    // 暂时假设 res.data 是 url 列表，或者 res 就是 url 列表
+    // 需要根据实际 request 封装来判断。通常是 res.data
+    // 如果 file.js 的 uploadFileAPI 返回的是 Promise<AxiosResponse>
+    
+    if (res.code === '0' || res.code === 200 || !res.code) {
+      // 假设返回的是文件路径列表
+      const urls = res.data || res
+      if (Array.isArray(urls) && urls.length > 0) {
+        carouselForm.imageUrl = urls[0]
+        ElMessage.success('上传成功')
+      } else if (typeof urls === 'string') {
+        carouselForm.imageUrl = urls
+        ElMessage.success('上传成功')
+      } else {
+        ElMessage.error('上传返回值格式异常')
+      }
+    } else {
+      ElMessage.error(res.msg || '上传失败')
+    }
+  } catch (error) {
+    console.error('上传出错', error)
+    ElMessage.error('上传出错')
+  }
 }
 
 // 编辑轮播图
@@ -283,41 +291,38 @@ const handleDeleteCarousel = (row) => {
 }
 
 // 确认删除轮播图
-const confirmDeleteCarousel = () => {
-  // 这里应该调用API删除轮播图
-  console.log('删除轮播图', carouselToDelete.value)
-  ElMessage.success(`轮播图 "${carouselToDelete.value.title}" 已成功删除`)
-  deleteDialogVisible.value = false
-  // 删除后刷新列表
-  fetchCarouselList()
+const confirmDeleteCarousel = async () => {
+  try {
+    await deleteBannerAPI(carouselToDelete.value.id, 'HOME')
+    ElMessage.success('删除成功')
+    deleteDialogVisible.value = false
+    fetchCarouselList()
+  } catch (error) {
+    ElMessage.error('删除失败')
+  }
 }
 
 // 重置表单
 const resetCarouselForm = () => {
   carouselForm.id = 0
-  carouselForm.title = ''
   carouselForm.imageUrl = ''
   carouselForm.sort = 1
-  carouselForm.linkUrl = ''
   carouselForm.status = '启用'
   carouselFormRef.value?.resetFields()
 }
 
 // 提交表单
 const submitCarouselForm = () => {
-  carouselFormRef.value?.validate((valid) => {
+  carouselFormRef.value?.validate(async (valid) => {
     if (valid) {
-      if (carouselFormMode.value === 'add') {
-        // 这里应该调用API添加轮播图
-        console.log('添加轮播图', carouselForm)
-        ElMessage.success('添加轮播图成功')
-      } else {
-        // 这里应该调用API更新轮播图
-        console.log('更新轮播图', carouselForm)
-        ElMessage.success('更新轮播图成功')
+      try {
+        await saveBannerAPI(carouselForm, 'HOME')
+        ElMessage.success(carouselFormMode.value === 'add' ? '添加成功' : '更新成功')
+        carouselDialogVisible.value = false
+        fetchCarouselList()
+      } catch (error) {
+        ElMessage.error('操作失败')
       }
-      carouselDialogVisible.value = false
-      fetchCarouselList()
     } else {
       return false
     }
@@ -325,7 +330,9 @@ const submitCarouselForm = () => {
 }
 
 // 初始加载
-fetchCarouselList()
+onMounted(() => {
+  fetchCarouselList()
+})
 </script>
 
 <style scoped>
@@ -363,26 +370,35 @@ fetchCarouselList()
   cursor: pointer;
   position: relative;
   overflow: hidden;
-  width: 178px;
-  height: 100px;
+  width: 360px;
+  height: 150px;
+  transition: var(--el-transition-duration-fast);
 }
 
 .carousel-uploader:hover {
-  border-color: #409eff;
+  border-color: var(--el-color-primary);
+}
+
+.carousel-uploader :deep(.el-upload-dragger) {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: none;
+  background-color: transparent;
 }
 
 .carousel-uploader-icon {
   font-size: 28px;
   color: #8c939d;
-  width: 178px;
-  height: 100px;
-  line-height: 100px;
   text-align: center;
 }
 
 .carousel-image {
-  width: 178px;
-  height: 100px;
+  width: 100%;
+  height: 100%;
   display: block;
   object-fit: cover;
 }

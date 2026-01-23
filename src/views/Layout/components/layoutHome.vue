@@ -1,14 +1,37 @@
 <script setup>
+import { ref, onMounted } from 'vue'
 import HerItem from './HerItem.vue'
 import VirItem from './VirItem.vue'
 import ActItem from './ActItem.vue'
 import EduItem from './EduItem.vue'
+import { getBannerListAPI } from '@/api/banner'
+
+const banners = ref([])
+
+const getBanners = async () => {
+  try {
+    const res = await getBannerListAPI('HOME')
+    // 过滤启用的轮播图并按sort排序
+    banners.value = res.filter(item => item.status === '启用').sort((a, b) => a.sort - b.sort)
+  } catch (error) {
+    console.error('获取轮播图失败', error)
+  }
+}
+
+onMounted(() => {
+  getBanners()
+})
 </script>
 
 <template>
   <!-- 轮播图 -->
   <div class="carousel">
-    <el-carousel>
+    <el-carousel v-if="banners.length > 0">
+      <el-carousel-item v-for="item in banners" :key="item.id">
+        <img :src="item.imageUrl" />
+      </el-carousel-item>
+    </el-carousel>
+    <el-carousel v-else>
       <el-carousel-item v-for="item in 3" :key="item">
         <img src="@/assets/image/layout.jpg" />
       </el-carousel-item>
