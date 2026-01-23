@@ -111,6 +111,7 @@ onMounted(() => {
               :src="img.imageUrl" 
               fit="cover"
               :preview-src-list="detail.imageList.map(i => i.imageUrl)"
+              :initial-index="index"
               preview-teleported
             />
             <p class="caption">{{ img.caption }}</p>
