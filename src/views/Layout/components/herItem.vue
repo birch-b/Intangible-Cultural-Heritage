@@ -1,17 +1,33 @@
-<script setup></script>
+<script setup>
+import { useRouter } from 'vue-router'
+
+const props = defineProps({
+  items: {
+    type: Array,
+    default: () => []
+  }
+})
+
+const router = useRouter()
+
+const goToDetail = (id) => {
+  router.push(`/heri_detail?id=${id}`)
+}
+</script>
 
 <template>
   <div class="her_content">
-    <div class="her_item" v-for="item of 3" :key="item">
-      <img src="@/assets/image/layout.jpg" />
+    <div class="her_item" v-for="item in items" :key="item.id">
+      <img :src="item.coverImage || '@/assets/image/layout.jpg'" />
       <div class="text">
-        <h3>广彩瓷器</h3>
+        <h3>{{ item.title }}</h3>
         <p>
-          广彩瓷器以其绚丽多彩的釉上彩绘著称，展现了广东工匠的高超技艺和独特审美
+          {{ item.summary }}
         </p>
-        <a href="" style="color: #0062ff">了解更多</a>
+        <span @click="goToDetail(item.id)" style="color: #0062ff; cursor: pointer;">了解更多</span>
       </div>
     </div>
+    <div v-if="items.length === 0" class="empty-text">暂无展示项目</div>
   </div>
 </template>
 
@@ -33,11 +49,18 @@
     flex-direction: column;
     justify-content: space-between;
     padding-bottom: 2vh;
+    transition: transform 0.3s, box-shadow 0.3s;
+
+    &:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
 
     img {
       width: 100%;
       height: 58%;
       border-radius: 8px 8px 0 0;
+      object-fit: cover;
     }
 
     .text {
@@ -45,14 +68,39 @@
       height: 35%;
       margin: 0 auto;
       display: flex;
+      flex-direction: column;
       justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
+      // align-items: center;
+      // flex-wrap: wrap;
+
+      h3 {
+        margin: 0;
+        font-size: 16px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
 
       p {
         color: #7e858f;
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.5;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
       }
     }
   }
+}
+
+.empty-text {
+  width: 100%;
+  text-align: center;
+  color: #999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 </style>
