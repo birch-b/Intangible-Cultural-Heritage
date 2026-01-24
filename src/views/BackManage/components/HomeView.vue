@@ -3,16 +3,17 @@
     <div class="info-grid">
       <div class="info-column">
         <div class="info-row">
-          <span class="info-label">账号：</span>
-          <span>{{ userInfo.account }}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">姓名：</span>
-          <span>{{ userInfo.name }}</span>
+          <span class="info-label">用户名：</span>
+          <span>{{ userInfo.username }}</span>
         </div>
         <div class="info-row">
           <span class="info-label">角色：</span>
-          <el-tag effect="light">{{ userInfo.role }}</el-tag>
+          <el-tag
+            :type="userInfo.role === '超级管理员' ? 'danger' : (userInfo.role === '普通管理员' ? 'warning' : 'success')"
+            effect="light"
+          >
+            {{ userInfo.role }}
+          </el-tag>
         </div>
       </div>
       <div class="info-column">
@@ -26,7 +27,7 @@
         </div>
         <div class="info-row">
           <span class="info-label">最后登录：</span>
-          <span>{{ userInfo.lastLogin }}</span>
+          <span>{{ userInfo.lastLoginTime }}</span>
         </div>
       </div>
     </div>

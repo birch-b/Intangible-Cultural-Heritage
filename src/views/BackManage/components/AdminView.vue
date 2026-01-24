@@ -32,7 +32,7 @@
       <el-table-column prop="role" label="角色">
         <template #default="scope">
           <el-tag
-            :type="scope.row.role === '超级管理员' ? 'primary' : 'danger'"
+            :type="scope.row.role === '超级管理员' ? 'danger' : (scope.row.role === '普通管理员' ? 'warning' : 'success')"
             effect="light"
           >
             {{ scope.row.role }}
@@ -41,7 +41,7 @@
       </el-table-column>
       <el-table-column prop="phone" label="电话" />
       <el-table-column prop="createTime" label="创建时间" width="180" />
-      <el-table-column prop="lastLogin" label="最后登录时间" width="180" />
+      <el-table-column prop="lastLoginTime" label="最后登录时间" width="180" />
       <el-table-column label="操作" width="180">
         <template #default="scope">
           <el-button

@@ -55,8 +55,8 @@
               </el-icon>
               <span class="ml-2">活动资讯管理</span>
             </template>
-            <el-menu-item index="5-1">活动列表</el-menu-item>
-            <el-menu-item index="5-2">活动分类管理</el-menu-item>
+            <el-menu-item index="5-1">活动管理</el-menu-item>
+            <el-menu-item index="5-2">活动分类列表</el-menu-item>
           </el-sub-menu>
           <!-- 教育培训管理 -->
           <el-sub-menu index="6">
@@ -67,7 +67,7 @@
               <span class="ml-2">教育培训管理</span>
             </template>
             <el-menu-item index="6-1">非遗资源管理</el-menu-item>
-            <el-menu-item index="6-2">培训报名管理</el-menu-item>
+            <!-- <el-menu-item index="6-2">培训报名管理</el-menu-item> -->
           </el-sub-menu>
           <!-- 审核与反馈管理 -->
           <el-sub-menu index="8">
@@ -91,27 +91,22 @@
           <h1 class="header-title">欢迎来到非遗平台管理系统</h1>
           <div class="header-actions">
             <div class="identity">
-              <el-menu>
-                <el-sub-menu index="7">
-                  <template #title>
-                    <div class="identity">
-                      <el-icon v-if="userInfo.role === '超级管理员'">
-                        <User />
-                      </el-icon>
-                      <el-icon v-else-if="userInfo.role === '普通管理员'">
-                        <Setting />
-                      </el-icon>
-                      <el-icon v-else>
-                        <Box />
-                      </el-icon>
-                      <el-tag effect="light">{{ userInfo.role }}</el-tag>
-                    </div>
-                  </template>
-                  <el-menu-item index="7-1">退出登录</el-menu-item>
-                  <el-menu-item index="7-2">修改密码</el-menu-item>
-                  <el-menu-item index="7-3">回到首页</el-menu-item>
-                </el-sub-menu>
-              </el-menu>
+              <el-dropdown @command="handleCommand">
+                <span class="el-dropdown-link identity" style="cursor: pointer; display: flex; align-items: center;">
+                  <el-avatar :size="32" :src="userInfo.avatar" style="margin-right: 8px">
+                    <img src="https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png" />
+                  </el-avatar>
+                  <span style="margin-right: 8px; font-size: 14px">{{ userInfo.username }}</span>
+                  <el-tag effect="light">{{ userInfo.role }}</el-tag>
+                  <el-icon class="el-icon--right"><arrow-down /></el-icon>
+                </span>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item command="logout">退出登录</el-dropdown-item>
+                    <el-dropdown-item command="home">回到首页</el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
             </div>
           </div>
         </div>
@@ -124,15 +119,21 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import {
   House,
   Setting,
   User,
   Box,
   Goods,
-  ChatDotSquare
+  ChatDotSquare,
+  ArrowDown
 } from '@element-plus/icons-vue'
+import { useUserStore } from '@/stores/user'
+
+const userStore = useUserStore()
+const router = useRouter()
 
 // 导入所有视图组件
 import HomeView from './components/HomeView.vue'
@@ -152,6 +153,32 @@ const activeMenu = ref('1')
 
 // 当前视图名称
 const currentView = ref('HomeView')
+
+// 用户信息 - 从 store 获取并处理角色显示
+const userInfo = computed(() => {
+  const info = userStore.userInfo || {}
+  let roleName = '普通用户'
+  if (info.role === 2) {
+    roleName = '超级管理员'
+  } else if (info.role === 1) {
+    roleName = '普通管理员'
+  }
+  
+  return {
+    ...info,
+    role: roleName,
+    // 确保有 createTime 和 lastLoginTime
+    createTime: info.createTime || '',
+    lastLoginTime: info.lastLoginTime || ''
+  }
+})
+
+// 初始化获取用户信息
+onMounted(async () => {
+  if (!userStore.userInfo || !userStore.userInfo.username) {
+    await userStore.getUserInfo()
+  }
+})
 
 // 基于当前视图名称计算当前组件
 const currentComponent = computed(() => {
@@ -182,6 +209,16 @@ const currentComponent = computed(() => {
       return HomeView
   }
 })
+
+// 处理下拉菜单命令
+const handleCommand = (command) => {
+  if (command === 'logout') {
+    userStore.logout()
+    router.push('/login')
+  } else if (command === 'home') {
+    router.push('/')
+  }
+}
 
 // 菜单点击事件
 const handleMenuSelect = (index) => {
@@ -224,15 +261,7 @@ const handleMenuSelect = (index) => {
   }
 }
 
-// 用户信息
-const userInfo = ref({
-  account: 'zhangwei',
-  name: '张伟',
-  role: '超级管理员',
-  phone: '13812345678',
-  createTime: '2024-01-01',
-  lastLogin: '2024-01-20 14:30:00'
-})
+
 </script>
 
 <style scoped>
