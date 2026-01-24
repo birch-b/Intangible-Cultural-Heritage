@@ -11,7 +11,7 @@
 
     <!-- 分类列表 (纯展示) -->
     <el-table :data="categoryList" stripe style="width: 100%">
-      <el-table-column prop="id" label="ID" width="80" />
+      <el-table-column type="index" :index="indexMethod" label="序号" width="80" />
       <el-table-column prop="name" label="分类名称" width="180">
         <template #default="scope">
           <el-tag>{{ scope.row.name }}</el-tag>
@@ -24,6 +24,11 @@
 
 <script setup>
 import { ref } from 'vue'
+
+// 计算表格序号
+const indexMethod = (index) => {
+  return index + 1
+}
 
 // 静态分类数据 (与后端 Enum 对应)
 const categoryList = ref([
@@ -55,7 +60,7 @@ const categoryList = ref([
   {
     id: 6,
     name: '学术交流',
-    description: '学术交流' // 用户未提供，补充默认值
+    description: '以研讨、论坛、理念交流为核心的非遗保护发展会议或主题活动。'
   }
 ])
 </script>

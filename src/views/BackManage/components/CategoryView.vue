@@ -24,7 +24,6 @@
     >
       <el-table-column type="selection" width="55" />
       <el-table-column type="index" :index="indexMethod" label="序号" width="80" />
-      <!-- <el-table-column prop="id" label="ID" width="80" /> -->
       <el-table-column prop="name" label="名称" width="200" />
       <el-table-column prop="description" label="介绍" />
       <!-- 后端无状态字段，已移除 -->

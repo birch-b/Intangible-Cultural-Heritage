@@ -39,7 +39,7 @@
 
     <!-- 资讯列表 -->
     <el-table :data="newsList" stripe style="width: 100%" v-loading="loading">
-      <el-table-column prop="id" label="ID" width="60" />
+      <el-table-column type="index" :index="indexMethod" label="序号" width="80" />
       <el-table-column prop="title" label="标题" min-width="180" show-overflow-tooltip />
       <el-table-column label="分类" width="100">
         <template #default="scope">
@@ -301,6 +301,11 @@ const getTypeName = (val) => {
 const formatDateTime = (row, column, cellValue) => {
   if (!cellValue) return ''
   return dayjs(cellValue).format('YYYY-MM-DD HH:mm:ss')
+}
+
+// 计算表格序号
+const indexMethod = (index) => {
+  return (queryParams.current - 1) * queryParams.size + index + 1
 }
 
 // --- 列表相关 ---
@@ -639,36 +644,7 @@ onMounted(() => {
   width: 140px;
   height: 90px;
   text-align: center;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-
-.upload-text {
-  font-size: 12px;
-  margin-top: 5px;
-  line-height: 1.2;
-}
-
-/* 覆盖 el-upload 拖拽模式默认样式 */
-.avatar-uploader :deep(.el-upload-dragger) {
-  padding: 0;
-  width: 140px;
-  height: 90px;
-  border: none;
-  background-color: transparent;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.gallery-uploader :deep(.el-upload-dragger) {
-  padding: 0;
-  width: 80px;
-  height: 80px;
-  border: none;
-  background-color: transparent;
+  line-height: 90px;
   display: flex;
   justify-content: center;
   align-items: center;
