@@ -13,7 +13,7 @@ const router = createRouter({
       children: [
         {
           path: 'home',
-          component: () => import('@/views/Layout/components/LayoutHome.vue')
+          component: () => import('@/views/Layout/components/layoutHome.vue')
         },
         {
           path: 'heritage',
@@ -105,14 +105,14 @@ const router = createRouter({
     // 非遗详情-一级路由
     {
       path: '/heri_detail',
-      component: () => import('@/views/Heritage/components/HeritageDetail.vue')
+      component: () => import('@/views/Heritage/components/heritageDetail.vue')
     },
 
     // 非遗分类-一级路由
     {
       path: '/heri_category',
       component: () =>
-        import('@/views/Heritage/components/HeritageCategory.vue')
+        import('@/views/Heritage/components/heritageCategory.vue')
     },
 
     // 活动详情-一级路由
