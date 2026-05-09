@@ -12,73 +12,65 @@
           active-text-color="#409EFF"
           @select="handleMenuSelect"
         >
-          <el-menu-item index="1">
+          <el-menu-item index="home" @click="goHome">
             <el-icon>
               <House />
             </el-icon>
-            <span class="ml-2">首页</span>
+            <span class="ml-2">返回首页</span>
           </el-menu-item>
-          <el-menu-item index="2">
+          <el-menu-item index="1">
             <el-icon>
-              <Setting />
+              <Odometer />
             </el-icon>
-            <span class="ml-2">管理员管理</span>
+            <span class="ml-2">管理首页</span>
           </el-menu-item>
-          <!-- 其他菜单项保持不变 -->
-          <!-- 轮播图管理 -->
-          <el-sub-menu index="3">
+          <!-- 内容管理 -->
+          <el-sub-menu index="content">
+            <template #title>
+              <el-icon>
+                <Grid />
+              </el-icon>
+              <span class="ml-2">内容管理</span>
+            </template>
+            <el-menu-item index="3-1">首页轮播图</el-menu-item>
+            <el-menu-item index="3-2">非遗展示轮播图</el-menu-item>
+            <el-menu-item index="4-1">项目类别管理</el-menu-item>
+            <el-menu-item index="4-2">项目详情管理</el-menu-item>
+            <el-menu-item index="5-1">活动管理</el-menu-item>
+            <el-menu-item index="5-2">活动分类列表</el-menu-item>
+          </el-sub-menu>
+          <!-- 教育培训 -->
+          <el-sub-menu index="6">
+            <template #title>
+              <el-icon>
+                <Reading />
+              </el-icon>
+              <span class="ml-2">教育培训</span>
+            </template>
+            <el-menu-item index="6-1">非遗资源管理</el-menu-item>
+          </el-sub-menu>
+          <!-- 用户与系统 -->
+          <el-sub-menu index="system">
             <template #title>
               <el-icon>
                 <User />
               </el-icon>
-              <span class="ml-2">轮播图管理</span>
+              <span class="ml-2">用户与系统</span>
             </template>
-            <el-menu-item index="3-1">首页轮播图</el-menu-item>
-            <el-menu-item index="3-2">非遗展示轮播图</el-menu-item>
-          </el-sub-menu>
-          <!-- 非遗展示管理 -->
-          <el-sub-menu index="4">
-            <template #title>
-              <el-icon>
-                <Box />
-              </el-icon>
-              <span class="ml-2">非遗展示管理</span>
-            </template>
-            <el-menu-item index="4-1">项目类别管理</el-menu-item>
-            <el-menu-item index="4-2">项目详情管理</el-menu-item>
-          </el-sub-menu>
-          <!-- 活动资讯管理 -->
-          <el-sub-menu index="5">
-            <template #title>
-              <el-icon>
-                <Goods />
-              </el-icon>
-              <span class="ml-2">活动资讯管理</span>
-            </template>
-            <el-menu-item index="5-1">活动管理</el-menu-item>
-            <el-menu-item index="5-2">活动分类列表</el-menu-item>
-          </el-sub-menu>
-          <!-- 教育培训管理 -->
-          <el-sub-menu index="6">
-            <template #title>
-              <el-icon>
-                <House />
-              </el-icon>
-              <span class="ml-2">教育培训管理</span>
-            </template>
-            <el-menu-item index="6-1">非遗资源管理</el-menu-item>
-            <!-- <el-menu-item index="6-2">培训报名管理</el-menu-item> -->
-          </el-sub-menu>
-          <!-- 审核与反馈管理 -->
-          <el-sub-menu index="8">
-            <template #title>
-              <el-icon>
-                <ChatDotSquare />
-              </el-icon>
-              <span class="ml-2">审核与反馈管理</span>
-            </template>
+            <el-menu-item index="2">管理员管理</el-menu-item>
             <el-menu-item index="8-1">用户反馈管理</el-menu-item>
           </el-sub-menu>
+          <!-- 退出登录 -->
+          <el-menu-item
+            index="logout"
+            @click="handleLogout"
+            class="logout-item"
+          >
+            <el-icon>
+              <SwitchButton />
+            </el-icon>
+            <span class="ml-2">退出登录</span>
+          </el-menu-item>
         </el-menu>
       </div>
     </div>
@@ -86,28 +78,17 @@
     <!-- 右侧内容区域 -->
     <div class="content">
       <div class="content-padding">
-        <!-- 右上角标题和用户菜单 -->
+        <!-- 右上角标题和用户信息 -->
         <div class="header">
           <h1 class="header-title">欢迎来到非遗平台管理系统</h1>
-          <div class="header-actions">
-            <div class="identity">
-              <el-dropdown @command="handleCommand">
-                <span class="el-dropdown-link identity" style="cursor: pointer; display: flex; align-items: center;">
-                  <el-avatar :size="32" :src="userInfo.avatar" style="margin-right: 8px">
-                    <img src="https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png" />
-                  </el-avatar>
-                  <span style="margin-right: 8px; font-size: 14px">{{ userInfo.username }}</span>
-                  <el-tag effect="light">{{ userInfo.role }}</el-tag>
-                  <el-icon class="el-icon--right"><arrow-down /></el-icon>
-                </span>
-                <template #dropdown>
-                  <el-dropdown-menu>
-                    <el-dropdown-item command="logout">退出登录</el-dropdown-item>
-                    <el-dropdown-item command="home">回到首页</el-dropdown-item>
-                  </el-dropdown-menu>
-                </template>
-              </el-dropdown>
-            </div>
+          <div class="user-info">
+            <el-avatar :size="32" :src="userInfo.avatar">
+              <img
+                src="https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png"
+              />
+            </el-avatar>
+            <span class="username">{{ userInfo.username }}</span>
+            <el-tag effect="light" size="small">{{ userInfo.role }}</el-tag>
           </div>
         </div>
 
@@ -123,13 +104,13 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   House,
-  Setting,
+  Odometer,
   User,
-  Box,
-  Goods,
-  ChatDotSquare,
-  ArrowDown
+  Grid,
+  Reading,
+  SwitchButton
 } from '@element-plus/icons-vue'
+import { ElMessageBox, ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 
 const userStore = useUserStore()
@@ -163,11 +144,10 @@ const userInfo = computed(() => {
   } else if (info.role === 1) {
     roleName = '普通管理员'
   }
-  
+
   return {
     ...info,
     role: roleName,
-    // 确保有 createTime 和 lastLoginTime
     createTime: info.createTime || '',
     lastLoginTime: info.lastLoginTime || ''
   }
@@ -210,13 +190,24 @@ const currentComponent = computed(() => {
   }
 })
 
-// 处理下拉菜单命令
-const handleCommand = (command) => {
-  if (command === 'logout') {
-    userStore.logout()
+// 返回首页
+const goHome = () => {
+  router.push('/')
+}
+
+// 退出登录
+const handleLogout = async () => {
+  try {
+    await ElMessageBox.confirm('确定要退出登录吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    await userStore.logout()
+    ElMessage.success('已退出登录')
     router.push('/login')
-  } else if (command === 'home') {
-    router.push('/')
+  } catch {
+    // 取消退出
   }
 }
 
@@ -250,9 +241,6 @@ const handleMenuSelect = (index) => {
     case '6-1':
       currentView.value = 'HeritageMediaView'
       break
-    case '6-2':
-      currentView.value = 'TrainingRegistrationView'
-      break
     case '8-1':
       currentView.value = 'UserFeedbackView'
       break
@@ -260,21 +248,11 @@ const handleMenuSelect = (index) => {
       currentView.value = 'HomeView'
   }
 }
-
-
 </script>
 
 <style scoped>
-/* 保持原来的样式不变 */
 .flex {
   display: flex;
-}
-
-.title {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-left: 70px;
 }
 
 .min-h-screen {
@@ -285,20 +263,42 @@ const handleMenuSelect = (index) => {
   width: 256px;
   background-color: #374151;
   color: #ffffff;
+  display: flex;
+  flex-direction: column;
 }
 
 .sidebar-content {
   padding: 16px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .title {
   font-size: 1.25rem;
   font-weight: bold;
   margin-bottom: 2rem;
+  text-align: center;
 }
 
 .custom-menu {
   border: none;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.custom-menu .el-menu-item:last-child {
+  margin-top: auto;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.logout-item {
+  color: #f87171 !important;
+}
+
+.logout-item:hover {
+  background-color: rgba(248, 113, 113, 0.1) !important;
 }
 
 .content {
@@ -315,6 +315,8 @@ const handleMenuSelect = (index) => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .header-title {
@@ -322,14 +324,14 @@ const handleMenuSelect = (index) => {
   font-weight: bold;
 }
 
-.header-actions {
+.user-info {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
-.identity {
-  display: flex;
-  align-items: center;
+.username {
+  font-size: 0.875rem;
+  color: #374151;
 }
 </style>

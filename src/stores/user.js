@@ -44,9 +44,49 @@ export const useUserStore = defineStore(
       userInfo.value = {}
     }
 
-    return { token, userInfo, userLogin, getUserInfo, userRegister, logout }
+    const tryRestoreSession = () => {
+      try {
+        const savedToken = localStorage.getItem('user-token')
+        const savedUserInfo = localStorage.getItem('user-userInfo')
+        if (savedToken) {
+          token.value = JSON.parse(savedToken)
+        }
+        if (savedUserInfo) {
+          userInfo.value = JSON.parse(savedUserInfo)
+        }
+      } catch (e) {
+        console.warn('Failed to restore session from localStorage', e)
+      }
+    }
+
+    const saveSession = () => {
+      try {
+        localStorage.setItem('user-token', JSON.stringify(token.value))
+        localStorage.setItem('user-userInfo', JSON.stringify(userInfo.value))
+      } catch (e) {
+        console.warn('Failed to save session to localStorage', e)
+      }
+    }
+
+    // 尝试恢复会话
+    tryRestoreSession()
+
+    return {
+      token,
+      userInfo,
+      userLogin,
+      getUserInfo,
+      userRegister,
+      logout,
+      tryRestoreSession,
+      saveSession
+    }
   },
   {
-    persist: true // 持久化存储
+    persist: {
+      storage: localStorage,
+      key: 'user',
+      paths: ['token', 'userInfo']
+    }
   }
 )

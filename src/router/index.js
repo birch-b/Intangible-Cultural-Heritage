@@ -142,7 +142,18 @@ router.beforeEach((to, from, next) => {
     if (!userStore.token) {
       next('/login')
     } else {
-      next()
+      // 检查管理员路由权限
+      if (to.path.startsWith('/backmanage')) {
+        const role = userStore.userInfo?.role
+        if (role != 1 && role != 2) {
+          // 不是管理员，跳转到首页
+          next('/')
+        } else {
+          next()
+        }
+      } else {
+        next()
+      }
     }
   } else {
     next()

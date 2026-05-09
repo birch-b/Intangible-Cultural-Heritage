@@ -5,10 +5,9 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
 
-// https://vite.dev/config/
-export default defineConfig(({ command, mode }) => {
+export default defineConfig(({ mode }) => {
   return {
-    base: mode === 'production' ? '/gric/' : '/', // 开发环境使用 /，生产环境使用 /gric/
+    base: mode === 'production' ? '/gric/' : '/',
     plugins: [vue(), vueDevTools()],
     resolve: {
       alias: {
@@ -16,18 +15,25 @@ export default defineConfig(({ command, mode }) => {
       }
     },
     server: {
+      host: '0.0.0.0',
+      port: 5174,
       proxy: {
         '/api': {
-          target: 'http://localhost:30002',
-          changeOrigin: true
+          target: 'http://118.195.215.81',
+          changeOrigin: true,
+          secure: false,
+          rewrite: (path) => path.replace(/^\/api/, '/gric/api')
         },
         '/uploads': {
-          target: 'http://localhost:30002',
-          changeOrigin: true
+          target: 'http://118.195.215.81',
+          changeOrigin: true,
+          secure: false,
+          rewrite: (path) => path.replace(/^\/uploads/, '/gric/uploads')
         },
         '/gric/uploads': {
-          target: 'http://localhost:30002',
-          changeOrigin: true
+          target: 'http://118.195.215.81',
+          changeOrigin: true,
+          secure: false
         }
       }
     }

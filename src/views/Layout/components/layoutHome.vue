@@ -1,9 +1,9 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import HerItem from './HerItem.vue'
-import VirItem from './VirItem.vue'
-import ActItem from './ActItem.vue'
-import EduItem from './EduItem.vue'
+import HerItem from './herItem.vue'
+import VirItem from './virItem.vue'
+import ActItem from './actItem.vue'
+import EduItem from './eduItem.vue'
 import { getBannerListAPI } from '@/api/banner'
 import { getHeritagePageAPI } from '@/api/heritage'
 import { pageActivity } from '@/api/heritageActivity'
@@ -18,7 +18,9 @@ const getBanners = async () => {
   try {
     const res = await getBannerListAPI('HOME')
     // 过滤启用的轮播图并按sort排序
-    banners.value = res.filter(item => item.status === '启用').sort((a, b) => a.sort - b.sort)
+    banners.value = res
+      .filter((item) => item.status === '启用')
+      .sort((a, b) => a.sort - b.sort)
   } catch (error) {
     console.error('获取轮播图失败', error)
   }
@@ -27,18 +29,30 @@ const getBanners = async () => {
 // 获取非遗展示（精选项目）
 const getHeritageItems = async () => {
   try {
-    const res = await getHeritagePageAPI({ 
-      current: 1, 
-      size: 3, 
-      isFeatured: 1, 
-      status: 2 
+    const res = await getHeritagePageAPI({
+      current: 1,
+      size: 3,
+      isFeatured: 1,
+      status: 2
     })
-    if (res.code === '0' || res.code === 200 || !res.code) {
-      const data = res.data || res
-      heritageItems.value = data.records || []
+
+    let data = res
+    if (res && res.data) {
+      data = res.data
+    }
+
+    if (Array.isArray(data)) {
+      heritageItems.value = data
+    } else if (data && Array.isArray(data.records)) {
+      heritageItems.value = data.records
+    } else if (data && Array.isArray(data.list)) {
+      heritageItems.value = data.list
+    } else {
+      heritageItems.value = []
     }
   } catch (error) {
     console.error('获取非遗展示失败', error)
+    heritageItems.value = []
   }
 }
 
@@ -46,12 +60,24 @@ const getHeritageItems = async () => {
 const getActivityItems = async () => {
   try {
     const res = await pageActivity({ current: 1, size: 3, status: 1 })
-    if (res.code === '0' || res.code === 200 || !res.code) {
-      const data = res.data || res
-      activityItems.value = data.records || []
+
+    let data = res
+    if (res && res.data) {
+      data = res.data
+    }
+
+    if (Array.isArray(data)) {
+      activityItems.value = data
+    } else if (data && Array.isArray(data.records)) {
+      activityItems.value = data.records
+    } else if (data && Array.isArray(data.list)) {
+      activityItems.value = data.list
+    } else {
+      activityItems.value = []
     }
   } catch (error) {
     console.error('获取活动资讯失败', error)
+    activityItems.value = []
   }
 }
 
@@ -59,22 +85,51 @@ const getActivityItems = async () => {
 const getEducationItems = async () => {
   try {
     // 媒体关注 (sourceType=1)
-    const mediaRes = await getMediaPageAPI({ current: 1, size: 2, sourceType: 1 })
+    const mediaRes = await getMediaPageAPI({
+      current: 1,
+      size: 2,
+      sourceType: 1
+    })
     // 文化讲堂 (sourceType=2)
-    const lectureRes = await getMediaPageAPI({ current: 1, size: 1, sourceType: 2 })
-    
+    const lectureRes = await getMediaPageAPI({
+      current: 1,
+      size: 1,
+      sourceType: 2
+    })
+
     let items = []
-    if (mediaRes.code === '0' || mediaRes.code === 200) {
-      items = [...items, ...(mediaRes.data.records || [])]
+
+    // 处理 mediaRes
+    let mediaData = mediaRes
+    if (mediaRes && mediaRes.data) {
+      mediaData = mediaRes.data
     }
-    if (lectureRes.code === '0' || lectureRes.code === 200) {
-      items = [...items, ...(lectureRes.data.records || [])]
+    if (Array.isArray(mediaData)) {
+      items = [...items, ...mediaData]
+    } else if (mediaData && Array.isArray(mediaData.records)) {
+      items = [...items, ...mediaData.records]
+    } else if (mediaData && Array.isArray(mediaData.list)) {
+      items = [...items, ...mediaData.list]
     }
-    
+
+    // 处理 lectureRes
+    let lectureData = lectureRes
+    if (lectureRes && lectureRes.data) {
+      lectureData = lectureRes.data
+    }
+    if (Array.isArray(lectureData)) {
+      items = [...items, ...lectureData]
+    } else if (lectureData && Array.isArray(lectureData.records)) {
+      items = [...items, ...lectureData.records]
+    } else if (lectureData && Array.isArray(lectureData.list)) {
+      items = [...items, ...lectureData.list]
+    }
+
     // 取前3个
     educationItems.value = items.slice(0, 3)
   } catch (error) {
     console.error('获取教育培训失败', error)
+    educationItems.value = []
   }
 }
 

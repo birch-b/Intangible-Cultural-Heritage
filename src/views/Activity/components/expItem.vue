@@ -2,12 +2,12 @@
 import { useRouter } from 'vue-router'
 import dayjs from 'dayjs'
 
-const props = defineProps({
-  items: {
-    type: Array,
-    default: () => []
-  }
-})
+// const props = defineProps({
+//   items: {
+//     type: Array,
+//     default: () => []
+//   }
+// })
 
 const router = useRouter()
 
@@ -22,18 +22,21 @@ const formatDate = (time) => {
 
 <template>
   <div class="exp">
-    <div 
-      class="expItem" 
-      v-for="item in items" 
+    <div
+      class="expItem"
+      v-for="item in items"
       :key="item.id"
       @click="goToDetail(item.id)"
-      style="cursor: pointer;"
+      style="cursor: pointer"
     >
       <p class="title">{{ item.title }}</p>
       <p class="time">{{ formatDate(item.createTime) }}</p>
     </div>
     <!-- 占位符：如果没有数据显示空状态或骨架屏，这里简单处理 -->
-    <div v-if="items.length === 0" style="width: 100%; text-align: center; color: #999;">
+    <div
+      v-if="items.length === 0"
+      style="width: 100%; text-align: center; color: #999"
+    >
       暂无非遗要闻
     </div>
   </div>

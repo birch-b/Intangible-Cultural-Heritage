@@ -1,19 +1,18 @@
 <script setup>
 import { ArrowRight } from '@element-plus/icons-vue'
 import { ref, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { getActivityDetail } from '@/api/heritageActivity'
 import dayjs from 'dayjs'
 
 const route = useRoute()
-const router = useRouter()
+// const router = useRouter()
 const detail = ref({})
 const loading = ref(false)
 
 const getDetail = async () => {
   const id = route.query.id
   if (!id) return
-  
   loading.value = true
   try {
     const res = await getActivityDetail(id)
@@ -23,7 +22,7 @@ const getDetail = async () => {
       if (typeof detail.value.imageList === 'string') {
         try {
           detail.value.imageList = JSON.parse(detail.value.imageList)
-        } catch (e) {
+        } catch {
           detail.value.imageList = []
         }
       }
@@ -62,15 +61,18 @@ onMounted(() => {
     <!-- 顶部面包屑 -->
     <div class="breadcrumb-bar">
       <el-breadcrumb :separator-icon="ArrowRight">
-        <el-breadcrumb-item :to="{ path: '/activity' }">活动资讯</el-breadcrumb-item>
-        <el-breadcrumb-item :to="{ path: '/act_category' }">全部活动</el-breadcrumb-item>
+        <el-breadcrumb-item :to="{ path: '/activity' }"
+          >活动资讯</el-breadcrumb-item
+        >
+        <el-breadcrumb-item :to="{ path: '/act_category' }"
+          >全部活动</el-breadcrumb-item
+        >
         <el-breadcrumb-item>活动详情</el-breadcrumb-item>
       </el-breadcrumb>
     </div>
 
     <div class="content-wrapper">
       <h1 class="title">{{ detail.title }}</h1>
-      
       <div class="meta-info">
         <span class="tag">{{ getTypeName(detail.type) }}</span>
         <span class="time">发布时间：{{ formatTime(detail.createTime) }}</span>
@@ -103,14 +105,21 @@ onMounted(() => {
       <div class="html-content" v-html="detail.content"></div>
 
       <!-- 图集 -->
-      <div class="gallery" v-if="detail.imageList && detail.imageList.length > 0">
+      <div
+        class="gallery"
+        v-if="detail.imageList && detail.imageList.length > 0"
+      >
         <h3>精彩瞬间</h3>
         <div class="gallery-grid">
-          <div class="gallery-item" v-for="(img, index) in detail.imageList" :key="index">
-            <el-image 
-              :src="img.imageUrl" 
+          <div
+            class="gallery-item"
+            v-for="(img, index) in detail.imageList"
+            :key="index"
+          >
+            <el-image
+              :src="img.imageUrl"
               fit="cover"
-              :preview-src-list="detail.imageList.map(i => i.imageUrl)"
+              :preview-src-list="detail.imageList.map((i) => i.imageUrl)"
               :initial-index="index"
               preview-teleported
             />
@@ -132,7 +141,7 @@ onMounted(() => {
     background-color: #88393c;
     padding: 20px 10%;
     margin-bottom: 20px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   }
 
   .content-wrapper {
@@ -141,7 +150,7 @@ onMounted(() => {
     background-color: #fff;
     padding: 40px;
     border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 
     .title {
       font-size: 28px;
@@ -227,7 +236,7 @@ onMounted(() => {
       font-size: 16px;
       margin-bottom: 40px;
       white-space: pre-wrap;
-      
+
       :deep(img) {
         max-width: 100%;
         height: auto;
@@ -248,7 +257,7 @@ onMounted(() => {
 
         .gallery-item {
           text-align: center;
-          
+
           .el-image {
             width: 100%;
             height: 150px;

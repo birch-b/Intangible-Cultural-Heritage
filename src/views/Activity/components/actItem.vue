@@ -1,12 +1,12 @@
 <script setup>
 import { useRouter } from 'vue-router'
 
-const props = defineProps({
-  items: {
-    type: Array,
-    default: () => []
-  }
-})
+// const props = defineProps({
+//   items: {
+//     type: Array,
+//     default: () => []
+//   }
+// })
 
 const router = useRouter()
 
@@ -17,17 +17,20 @@ const goToDetail = (id) => {
 
 <template>
   <div class="act">
-    <div 
-      class="actItem" 
-      v-for="item in items" 
+    <div
+      class="actItem"
+      v-for="item in items"
       :key="item.id"
       @click="goToDetail(item.id)"
-      style="cursor: pointer;"
+      style="cursor: pointer"
     >
       <img :src="item.coverImage || '@/assets/image/layout.jpg'" />
       <h4>{{ item.title }}</h4>
     </div>
-    <div v-if="items.length === 0" style="width: 100%; text-align: center; color: #999;">
+    <div
+      v-if="items.length === 0"
+      style="width: 100%; text-align: center; color: #999"
+    >
       暂无相关活动
     </div>
   </div>
@@ -52,7 +55,9 @@ const goToDetail = (id) => {
     justify-content: flex-start;
     align-items: flex-start;
     margin-bottom: 20px;
-    transition: transform 0.3s, box-shadow 0.3s;
+    transition:
+      transform 0.3s,
+      box-shadow 0.3s;
 
     &:hover {
       transform: translateY(-5px);

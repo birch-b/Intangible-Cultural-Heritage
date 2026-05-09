@@ -4,7 +4,13 @@
       <div class="card-header">
         <span>管理员管理</span>
         <div class="header-actions">
-          <el-select v-model="searchRole" placeholder="角色" clearable style="width: 120px; margin-right: 10px" @change="searchAdmins">
+          <el-select
+            v-model="searchRole"
+            placeholder="角色"
+            clearable
+            style="width: 120px; margin-right: 10px"
+            @change="searchAdmins"
+          >
             <el-option label="普通用户" :value="0" />
             <el-option label="普通管理员" :value="1" />
             <el-option label="超级管理员" :value="2" />
@@ -27,12 +33,23 @@
 
     <!-- 管理员列表 -->
     <el-table :data="adminList" stripe style="width: 100%">
-      <el-table-column type="index" :index="indexMethod" label="序号" width="80" />
+      <el-table-column
+        type="index"
+        :index="indexMethod"
+        label="序号"
+        width="80"
+      />
       <el-table-column prop="username" label="用户名" width="150" />
       <el-table-column prop="role" label="角色">
         <template #default="scope">
           <el-tag
-            :type="scope.row.role === '超级管理员' ? 'danger' : (scope.row.role === '普通管理员' ? 'warning' : 'success')"
+            :type="
+              scope.row.role === '超级管理员'
+                ? 'danger'
+                : scope.row.role === '普通管理员'
+                  ? 'warning'
+                  : 'success'
+            "
             effect="light"
           >
             {{ scope.row.role }}
@@ -59,7 +76,9 @@
             type="danger"
             @click="handleDeleteAdmin(scope.row)"
             :disabled="
-              userInfo.role !== '超级管理员' || scope.row.role === '超级管理员' || scope.row.username === userInfo.username
+              userInfo.role !== '超级管理员' ||
+              scope.row.role === '超级管理员' ||
+              scope.row.username === userInfo.username
             "
           >
             删除
@@ -150,7 +169,12 @@
 
     <!-- 删除确认对话框 -->
     <el-dialog v-model="deleteDialogVisible" title="删除确认" width="400px">
-      <p>确定要删除管理员 "{{ adminToDelete.username }}" 吗？此操作不可撤销。</p>
+      <p>
+        确定要删除{{
+          adminToDelete.role === '普通用户' ? '用户' : '管理员'
+        }}
+        "{{ adminToDelete.username }}" 吗？此操作不可撤销。
+      </p>
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="deleteDialogVisible = false">取消</el-button>
@@ -167,7 +191,12 @@
 import { ref, reactive, onMounted, nextTick } from 'vue'
 import { Search, Plus } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { pageUserAPI, createAdminAPI, updateAdminAPI, deleteUserAPI } from '@/api/user'
+import {
+  pageUserAPI,
+  createAdminAPI,
+  updateAdminAPI,
+  deleteUserAPI
+} from '@/api/user'
 
 // 接收userInfo作为props
 const props = defineProps({
@@ -271,9 +300,14 @@ const fetchAdminList = async () => {
     }
     const res = await pageUserAPI(params)
     if (res.code === '0') {
-      adminList.value = res.data.records.map(item => ({
+      adminList.value = res.data.records.map((item) => ({
         ...item,
-        role: item.role === 2 ? '超级管理员' : (item.role === 1 ? '普通管理员' : '普通用户')
+        role:
+          item.role === 2
+            ? '超级管理员'
+            : item.role === 1
+              ? '普通管理员'
+              : '普通用户'
       }))
       totalAdmins.value = res.data.total
     }

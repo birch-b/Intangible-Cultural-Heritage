@@ -1,6 +1,7 @@
 <script setup>
 import { useRouter } from 'vue-router'
 
+// eslint-disable-next-line no-unused-vars
 const props = defineProps({
   items: {
     type: Array,
@@ -24,7 +25,11 @@ const goToDetail = (id) => {
         <p>
           {{ item.summary }}
         </p>
-        <span @click="goToDetail(item.id)" style="color: #0062ff; cursor: pointer;">了解更多</span>
+        <span
+          @click="goToDetail(item.id)"
+          style="color: #0062ff; cursor: pointer"
+          >了解更多</span
+        >
       </div>
     </div>
     <div v-if="items.length === 0" class="empty-text">暂无展示项目</div>
@@ -49,7 +54,9 @@ const goToDetail = (id) => {
     flex-direction: column;
     justify-content: space-between;
     padding-bottom: 2vh;
-    transition: transform 0.3s, box-shadow 0.3s;
+    transition:
+      transform 0.3s,
+      box-shadow 0.3s;
 
     &:hover {
       transform: translateY(-5px);

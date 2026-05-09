@@ -11,8 +11,7 @@ let timer = null
 const checkUnread = async () => {
   try {
     const res = await pageNotice({ page: 1, pageSize: 1, readStatus: 0 })
-    console.log('Check Unread Response:', res) // Debug log
-    
+    // console.log('Check Unread Response:', res) // Debug log
     // 兼容多种返回结构，优先判断 records 是否有数据
     if (res.data) {
       const { total, records } = res.data
@@ -23,12 +22,15 @@ const checkUnread = async () => {
         hasUnread.value = false
       }
     } else {
-       // 防御性编程：如果 res 本身就是 data (某些 request 封装会直接返回 data)
-       if ((res.total && res.total > 0) || (res.records && res.records.length > 0)) {
-          hasUnread.value = true
-       } else {
-          hasUnread.value = false
-       }
+      // 防御性编程：如果 res 本身就是 data (某些 request 封装会直接返回 data)
+      if (
+        (res.total && res.total > 0) ||
+        (res.records && res.records.length > 0)
+      ) {
+        hasUnread.value = true
+      } else {
+        hasUnread.value = false
+      }
     }
   } catch (e) {
     console.error('Check notice failed', e)

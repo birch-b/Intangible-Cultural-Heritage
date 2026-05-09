@@ -159,8 +159,14 @@ const handleRegister = async () => {
           phone: form1.phone
         })
         ElMessage.success('注册成功，请登录')
-        // 简单的切换视图逻辑，如果需要完整动画可能需要模拟点击
-        // 这里暂时不自动切换，让用户手动点击去登录，或者刷新
+        // 清空表单
+        form1.name = ''
+        form1.password = ''
+        form1.password1 = ''
+        form1.phone = ''
+        form1.yzm = ''
+        // 重置表单验证状态
+        registerFormRef.value.resetFields()
       } catch (error) {
         console.error(error)
       }
@@ -265,19 +271,26 @@ const handleRegister = async () => {
               placeholder="请输入手机号"
             />
           </el-form-item>
-          <el-form-item class="bewetween1" prop="yzm">
-            <el-input
-              style="width: 130px"
-              v-model="form1.yzm"
-              class="input"
-              placeholder="请输入验证码"
-            />
-            <el-button
-              style="width: 100px; margin-left: 20px"
-              @click="count"
-              :disabled="istrue"
-              >{{ min === 0 ? '获取验证码' : min }}</el-button
-            >
+          <el-form-item
+            label="验证码"
+            label-position="right"
+            prop="yzm"
+            class="yzm-item"
+          >
+            <div class="yzm-wrapper">
+              <el-input
+                style="flex: 1"
+                v-model="form1.yzm"
+                class="input"
+                placeholder="请输入验证码"
+              />
+              <el-button
+                style="width: 100px; margin-left: 12px"
+                @click="count"
+                :disabled="istrue"
+                >{{ min === 0 ? '获取验证码' : min }}</el-button
+              >
+            </div>
           </el-form-item>
           <el-form-item class="center">
             <el-button type="primary" @click="handleRegister">注册</el-button>
@@ -441,6 +454,18 @@ p {
           display: flex;
           justify-content: center;
         }
+      }
+      .yzm-item {
+        :deep(.el-form-item__content) {
+          display: flex !important;
+          justify-content: flex-end;
+        }
+      }
+      .yzm-wrapper {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        max-width: 250px;
       }
     }
   }

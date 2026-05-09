@@ -10,9 +10,20 @@ export const getBannerListAPI = async (type = 'HOME') => {
     method: 'get',
     params: { type }
   })
-  // 映射后端数据到前端使用的格式
-  const list = res.data || res || []
-  return list.map(item => ({
+
+  let list = []
+
+  if (Array.isArray(res)) {
+    list = res
+  } else if (res && Array.isArray(res.data)) {
+    list = res.data
+  } else if (res && Array.isArray(res.list)) {
+    list = res.list
+  } else if (res && typeof res.data === 'object' && res.data !== null) {
+    list = [res.data]
+  }
+
+  return list.map((item) => ({
     ...item,
     sort: item.sortOrder,
     status: item.status === 1 ? '启用' : '禁用'
@@ -29,9 +40,9 @@ export const pageBannerAPI = async (params) => {
     method: 'get',
     params
   })
-  
+
   if (res.data && res.data.records) {
-    res.data.records = res.data.records.map(item => ({
+    res.data.records = res.data.records.map((item) => ({
       ...item,
       sort: item.sortOrder,
       status: item.status === 1 ? '启用' : '禁用'
@@ -64,7 +75,7 @@ export const saveBannerAPI = async (banner, type = 'HOME') => {
 
 /**
  * 删除轮播图
- * @param {number} id 
+ * @param {number} id
  */
 export const deleteBannerAPI = async (id) => {
   return request({
