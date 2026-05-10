@@ -2,12 +2,12 @@
 import { useRouter } from 'vue-router'
 import dayjs from 'dayjs'
 
-// const props = defineProps({
-//   items: {
-//     type: Array,
-//     default: () => []
-//   }
-// })
+defineProps({
+  items: {
+    type: Array,
+    default: () => []
+  }
+})
 
 const router = useRouter()
 

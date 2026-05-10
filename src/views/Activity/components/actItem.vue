@@ -1,12 +1,12 @@
 <script setup>
 import { useRouter } from 'vue-router'
 
-// const props = defineProps({
-//   items: {
-//     type: Array,
-//     default: () => []
-//   }
-// })
+defineProps({
+  items: {
+    type: Array,
+    default: () => []
+  }
+})
 
 const router = useRouter()
 
@@ -28,7 +28,7 @@ const goToDetail = (id) => {
       <h4>{{ item.title }}</h4>
     </div>
     <div
-      v-if="items.length === 0"
+      v-if="!items || items.length === 0"
       style="width: 100%; text-align: center; color: #999"
     >
       暂无相关活动
