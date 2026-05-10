@@ -34,7 +34,7 @@ const formatDate = (time) => {
     </div>
     <!-- 占位符：如果没有数据显示空状态或骨架屏，这里简单处理 -->
     <div
-      v-if="items.length === 0"
+      v-if="!items || items.length === 0"
       style="width: 100%; text-align: center; color: #999"
     >
       暂无非遗要闻

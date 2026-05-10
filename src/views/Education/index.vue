@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import CardItem from './components/CardItem.vue'
+import CardItem from './components/cardItem.vue'
 import { getProjectList, getNewsList, getLectureList } from '@/api/education'
 
 const router = useRouter()

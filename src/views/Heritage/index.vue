@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import ExpItem from './components/ExpItem.vue'
-import ChoItem from './components/ChoItem.vue'
+import ExpItem from './components/expItem.vue'
+import ChoItem from './components/choItem.vue'
 import { getHeritagePageAPI, getCategoryListAPI } from '@/api/heritage'
 import { getBannerListAPI } from '@/api/banner'
 

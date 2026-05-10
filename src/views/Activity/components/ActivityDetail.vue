@@ -1,40 +1,68 @@
 <script setup>
 import { ArrowRight } from '@element-plus/icons-vue'
-import { ref, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { getActivityDetail } from '@/api/heritageActivity'
 import dayjs from 'dayjs'
 
 const route = useRoute()
-// const router = useRouter()
-const detail = ref({})
+const detail = ref(null)
 const loading = ref(false)
+const errorMessage = ref('')
+
+const imageList = computed(() => {
+  const list = detail.value?.imageList
+  if (Array.isArray(list)) return list
+  return []
+})
+
+const previewList = computed(() => {
+  return imageList.value.map((item) => item?.imageUrl).filter(Boolean)
+})
 
 const getDetail = async () => {
   const id = route.query.id
-  if (!id) return
+  if (!id) {
+    errorMessage.value = '缺少活动ID，无法加载详情'
+    detail.value = null
+    return
+  }
+
   loading.value = true
+  errorMessage.value = ''
+
   try {
     const res = await getActivityDetail(id)
     if (res.code === '0' || res.code === 200 || !res.code) {
-      detail.value = res.data || res
-      // 解析图集JSON字符串 (如果后端返回的是字符串)
-      if (typeof detail.value.imageList === 'string') {
+      const data = res.data || res
+      const normalized = data && typeof data === 'object' ? data : null
+
+      if (normalized && typeof normalized.imageList === 'string') {
         try {
-          detail.value.imageList = JSON.parse(detail.value.imageList)
+          normalized.imageList = JSON.parse(normalized.imageList)
         } catch {
-          detail.value.imageList = []
+          normalized.imageList = []
         }
       }
+
+      detail.value = normalized
+      if (!detail.value) {
+        errorMessage.value = '未获取到活动详情数据'
+      }
+      return
     }
+
+    detail.value = null
+    errorMessage.value = res.message || '活动详情加载失败，请稍后重试'
   } catch (error) {
     console.error('获取详情失败', error)
+    detail.value = null
+    errorMessage.value = '活动详情加载失败，请稍后重试'
   } finally {
     loading.value = false
   }
 }
 
-// 格式化时间
 const formatTime = (time) => {
   return time ? dayjs(time).format('YYYY-MM-DD HH:mm:ss') : ''
 }
@@ -58,25 +86,28 @@ onMounted(() => {
 
 <template>
   <div class="detail-container" v-loading="loading">
-    <!-- 顶部面包屑 -->
     <div class="breadcrumb-bar">
       <el-breadcrumb :separator-icon="ArrowRight">
-        <el-breadcrumb-item :to="{ path: '/activity' }"
-          >活动资讯</el-breadcrumb-item
-        >
-        <el-breadcrumb-item :to="{ path: '/act_category' }"
-          >全部活动</el-breadcrumb-item
-        >
+        <el-breadcrumb-item :to="{ path: '/activity' }">活动资讯</el-breadcrumb-item>
+        <el-breadcrumb-item :to="{ path: '/act_category' }">全部活动</el-breadcrumb-item>
         <el-breadcrumb-item>活动详情</el-breadcrumb-item>
       </el-breadcrumb>
     </div>
 
-    <div class="content-wrapper">
+    <div v-if="errorMessage" class="status-wrap">
+      <el-alert :title="errorMessage" type="error" show-icon :closable="false" />
+    </div>
+
+    <div v-else-if="!detail" class="status-wrap">
+      <el-empty description="暂无活动详情" />
+    </div>
+
+    <div v-else class="content-wrapper">
       <h1 class="title">{{ detail.title }}</h1>
       <div class="meta-info">
         <span class="tag">{{ getTypeName(detail.type) }}</span>
         <span class="time">发布时间：{{ formatTime(detail.createTime) }}</span>
-        <span class="publisher">发布者：{{ detail.publisher }}</span>
+        <span class="publisher">发布者：{{ detail.publisher || '未知' }}</span>
       </div>
 
       <div class="activity-info-card">
@@ -90,36 +121,26 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- 封面图 -->
       <div class="cover-image" v-if="detail.coverImage">
         <img :src="detail.coverImage" alt="活动封面" />
       </div>
 
-      <!-- 内容摘要 -->
       <div class="description" v-if="detail.description">
         <h3>活动摘要</h3>
         <p>{{ detail.description }}</p>
       </div>
 
-      <!-- 详情内容 (HTML) -->
-      <div class="html-content" v-html="detail.content"></div>
+      <div class="html-content" v-if="detail.content" v-html="detail.content"></div>
+      <el-empty v-else description="暂无正文内容" />
 
-      <!-- 图集 -->
-      <div
-        class="gallery"
-        v-if="detail.imageList && detail.imageList.length > 0"
-      >
+      <div class="gallery" v-if="imageList.length > 0">
         <h3>精彩瞬间</h3>
         <div class="gallery-grid">
-          <div
-            class="gallery-item"
-            v-for="(img, index) in detail.imageList"
-            :key="index"
-          >
+          <div class="gallery-item" v-for="(img, index) in imageList" :key="index">
             <el-image
               :src="img.imageUrl"
               fit="cover"
-              :preview-src-list="detail.imageList.map((i) => i.imageUrl)"
+              :preview-src-list="previewList"
               :initial-index="index"
               preview-teleported
             />
@@ -142,6 +163,14 @@ onMounted(() => {
     padding: 20px 10%;
     margin-bottom: 20px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  .status-wrap {
+    width: 80%;
+    margin: 0 auto;
+    background-color: #fff;
+    padding: 24px;
+    border-radius: 8px;
   }
 
   .content-wrapper {
@@ -186,6 +215,7 @@ onMounted(() => {
       .info-item {
         margin-bottom: 10px;
         font-size: 16px;
+
         &:last-child {
           margin-bottom: 0;
         }
@@ -194,6 +224,7 @@ onMounted(() => {
           font-weight: bold;
           color: #e6a23c;
         }
+
         .value {
           color: #606266;
         }
@@ -203,6 +234,7 @@ onMounted(() => {
     .cover-image {
       text-align: center;
       margin-bottom: 30px;
+
       img {
         max-width: 100%;
         max-height: 500px;
@@ -222,6 +254,7 @@ onMounted(() => {
         margin-bottom: 10px;
         font-size: 18px;
       }
+
       p {
         margin: 0;
         line-height: 1.6;

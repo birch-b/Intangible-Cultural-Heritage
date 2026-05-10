@@ -142,8 +142,8 @@ onMounted(() => {
           </template>
         </el-table-column>
         <el-table-column width="80" label="操作">
-          <template #default>
-            <el-button link type="primary" @click.stop>查看</el-button>
+          <template #default="scope">
+            <el-button link type="primary" @click.stop="goToDetail(scope.row)">查看</el-button>
           </template>
         </el-table-column>
       </el-table>

@@ -1,30 +1,43 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import ExpItem from './components/ExpItem.vue'
-import ActItem from './components/ActItem.vue'
+import ExpItem from './components/expItem.vue'
+import ActItem from './components/actItem.vue'
 import { pageActivity } from '@/api/heritageActivity'
 
 const router = useRouter()
 const newsList = ref([])
 const activityList = ref([])
+const loading = ref(false)
+const errorMessage = ref('')
 
-// 获取活动数据
 const getActivities = async () => {
+  loading.value = true
+  errorMessage.value = ''
+
   try {
-    // 获取最新6条，不区分类型，状态为已发布
     const res = await pageActivity({ current: 1, size: 6, status: 1 })
+
     if (res.code === '0' || res.code === 200 || !res.code) {
-      const list = res.data?.records || []
-      newsList.value = list // 非遗要闻用完整列表
-      activityList.value = list.slice(0, 4) // 相关活动取前4条
+      const list = res?.data?.records || []
+      newsList.value = list
+      activityList.value = list.slice(0, 4)
+      return
     }
+
+    newsList.value = []
+    activityList.value = []
+    errorMessage.value = res.message || '活动数据加载失败，请稍后重试'
   } catch (error) {
-    console.error('获取活动失败', error)
+    console.error('获取活动数据失败', error)
+    newsList.value = []
+    activityList.value = []
+    errorMessage.value = '活动数据加载失败，请稍后重试'
+  } finally {
+    loading.value = false
   }
 }
 
-// 跳转到全部分类
 const goToCategory = () => {
   router.push('/act_category')
 }
@@ -35,7 +48,6 @@ onMounted(() => {
 </script>
 
 <template>
-  <!-- 轮播图 -->
   <div class="carousel">
     <el-carousel>
       <el-carousel-item v-for="item in 3" :key="item">
@@ -45,16 +57,23 @@ onMounted(() => {
     <div class="curtain"></div>
   </div>
   <div class="container">
-    <div class="explore">
-      <h2>非遗要闻</h2>
-      <p @click="goToCategory" style="cursor: pointer;">查看全部></p>
-      <!-- 传递数据给子组件 -->
-      <ExpItem :items="newsList" />
+    <div v-if="loading" class="status-wrap">
+      <el-skeleton :rows="6" animated />
     </div>
-    <div class="choiceness">
-      <h2>相关活动</h2>
-      <ActItem :items="activityList" />
+    <div v-else-if="errorMessage" class="status-wrap">
+      <el-alert :title="errorMessage" type="error" show-icon :closable="false" />
     </div>
+    <template v-else>
+      <div class="explore">
+        <h2>非遗要闻</h2>
+        <p @click="goToCategory" style="cursor: pointer">查看全部></p>
+        <ExpItem :items="newsList" />
+      </div>
+      <div class="choiceness">
+        <h2>相关活动</h2>
+        <ActItem :items="activityList" />
+      </div>
+    </template>
   </div>
 </template>
 
@@ -75,7 +94,6 @@ onMounted(() => {
     }
 
     img {
-      // display: block;
       width: 100%;
       height: 50vh;
     }
@@ -101,14 +119,12 @@ onMounted(() => {
 
   h2 {
     color: #2b3543;
-    // font-weight: normal;
   }
 
   .explore {
     width: 80%;
     height: 47%;
     padding: 0.5vh 0;
-    // border-bottom: 2px solid #cccccc;
     margin: 0 auto;
     position: relative;
 
@@ -123,6 +139,11 @@ onMounted(() => {
     width: 80%;
     height: 50%;
     margin: 0 auto;
+  }
+
+  .status-wrap {
+    width: 80%;
+    margin: 30px auto 0;
   }
 }
 </style>
