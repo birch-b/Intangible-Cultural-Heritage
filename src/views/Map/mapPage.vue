@@ -1,5 +1,23 @@
 <script setup>
+import { onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 const mapUrl = `${import.meta.env.BASE_URL}3d.html`
+
+const handleMessage = (event) => {
+  if (event.data && event.data.action === 'navigateTo') {
+    router.push(event.data.path)
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('message', handleMessage)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('message', handleMessage)
+})
 </script>
 
 <template>

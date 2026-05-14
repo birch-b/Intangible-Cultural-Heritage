@@ -39,6 +39,10 @@ const router = createRouter({
         {
           path: 'feedback',
           component: () => import('@/views/Feedback/index.vue')
+        },
+        {
+          path: 'map',
+          component: () => import('@/views/Map/mapPage.vue')
         }
       ]
     },
@@ -94,12 +98,6 @@ const router = createRouter({
     {
       path: '/backmanage',
       component: () => import('@/views/BackManage/index.vue')
-    },
-
-    // 3d地图-一级路由
-    {
-      path: '/map',
-      component: () => import('@/views/Map/mapPage.vue')
     },
 
     // 非遗详情-一级路由

@@ -625,7 +625,7 @@
         `).join('')
 
         cultureButton.onclick = () => {
-          window.location.href = '/heritage'
+          window.parent.postMessage({ action: 'navigateTo', path: '/heritage' }, '*')
         }
 
         cultureCard.style.display = 'block'
@@ -761,7 +761,7 @@
       }
 
       function goBackHome() {
-        window.parent.location.href = '/home'
+        window.parent.postMessage({ action: 'navigateTo', path: '/home' }, '*')
       }
 
       window.addEventListener('mousemove', onMouseMove, false)
