@@ -1,6 +1,12 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { loginAPI, getUserInfoAPI, logoutAPI, registerAPI } from '@/api/user'
+import {
+  loginAPI,
+  getUserInfoAPI,
+  logoutAPI,
+  registerAPI,
+  getCodeAPI
+} from '@/api/user'
 
 export const useUserStore = defineStore(
   'user',
@@ -27,6 +33,12 @@ export const useUserStore = defineStore(
     // 注册
     const userRegister = async (data) => {
       await registerAPI(data)
+    }
+
+    // 获取验证码
+    const getCode = async (phone) => {
+      const res = await getCodeAPI(phone)
+      return res
     }
 
     // 退出登录
@@ -77,6 +89,7 @@ export const useUserStore = defineStore(
       userLogin,
       getUserInfo,
       userRegister,
+      getCode,
       logout,
       tryRestoreSession,
       saveSession

@@ -1,5 +1,14 @@
 import request from '@/utils/request'
 
+// 获取验证码
+export const getCodeAPI = (phone) => {
+  return request({
+    url: '/admin/v1/user/code',
+    method: 'get',
+    params: { phone }
+  })
+}
+
 // 用户登录
 export const loginAPI = (data) => {
   return request({

@@ -2,11 +2,11 @@
 import { ArrowRight, Star, StarFilled } from '@element-plus/icons-vue'
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { 
-  getHeritageDetailAPI, 
-  addHeritageCollectionAPI, 
-  cancelHeritageCollectionAPI, 
-  checkHeritageCollectionAPI 
+import {
+  getHeritageDetailAPI,
+  addHeritageCollectionAPI,
+  cancelHeritageCollectionAPI,
+  checkHeritageCollectionAPI
 } from '@/api/heritage'
 import { ElMessage } from 'element-plus'
 
@@ -92,10 +92,10 @@ onMounted(() => {
     </div>
     <div class="de_content" v-loading="loading">
       <div class="left_image">
-        <el-image 
+        <el-image
           v-if="detail.coverImage"
-          :src="detail.coverImage" 
-          fit="contain" 
+          :src="detail.coverImage"
+          fit="contain"
           style="width: 100%; height: 100%"
           preview-teleported
           :preview-src-list="[detail.coverImage]"
@@ -105,10 +105,10 @@ onMounted(() => {
       <div class="right_text">
         <div class="title-row">
           <h1 class="item-title">{{ detail.title }}</h1>
-          <el-button 
-            type="warning" 
-            :icon="isCollected ? StarFilled : Star" 
-            circle 
+          <el-button
+            type="warning"
+            :icon="isCollected ? StarFilled : Star"
+            circle
             size="large"
             @click="toggleCollect"
             :loading="collectLoading"
@@ -117,7 +117,11 @@ onMounted(() => {
         </div>
         <div class="item-meta">
           <span v-if="detail.region">地区：{{ detail.region }}</span>
-          <span v-if="detail.createTime">发布时间：{{ new Date(detail.createTime).toLocaleDateString() }}</span>
+          <span v-if="detail.createTime"
+            >发布时间：{{
+              new Date(detail.createTime).toLocaleDateString()
+            }}</span
+          >
         </div>
         <div class="item-summary" v-if="detail.summary">
           <strong>简介：</strong>{{ detail.summary }}
@@ -176,7 +180,7 @@ onMounted(() => {
       display: flex;
       align-items: center;
       justify-content: center;
-      
+
       .no-image {
         color: #fff;
       }

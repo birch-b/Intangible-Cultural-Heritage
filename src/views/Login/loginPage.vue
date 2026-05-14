@@ -116,13 +116,25 @@ const register = (event) => {
 const min = ref(0)
 const istrue = ref(false)
 // 获取验证码
-const count = () => {
+const count = async () => {
+  if (!form1.phone) {
+    ElMessage.warning('请先输入手机号')
+    return
+  }
   istrue.value = true
-  console.log('获取验证码')
   min.value = 60
+  try {
+    await userStore.getCode(form1.phone)
+    ElMessage.success('验证码已发送')
+  } catch (error) {
+    console.error('获取验证码失败', error)
+    ElMessage.error('获取验证码失败，请稍后重试')
+    istrue.value = false
+    min.value = 0
+    return
+  }
   let timer = setInterval(() => {
     min.value--
-    console.log(min.value !== 0)
     if (min.value === 0) {
       clearInterval(timer)
       istrue.value = false

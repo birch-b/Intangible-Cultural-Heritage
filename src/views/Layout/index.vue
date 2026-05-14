@@ -70,7 +70,7 @@ onUnmounted(() => {
             <el-menu-item index="/heritage">
               <span>非遗展示</span>
             </el-menu-item>
-            <el-menu-item index="/virtual">
+            <el-menu-item index="/map">
               <span>3D虚拟展厅</span>
             </el-menu-item>
             <el-menu-item index="/activity">

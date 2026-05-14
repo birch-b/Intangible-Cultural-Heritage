@@ -79,7 +79,6 @@
         box-shadow: 0 0 15px rgba(0, 150, 255, 0.5);
         border: 1px solid rgba(0, 150, 255, 0.3);
         z-index: 20;
-        /* 默认隐藏 */
         width: 300px;
       }
 
@@ -101,6 +100,64 @@
 
       .culture-button:hover {
         background-color: #0088cc;
+      }
+
+      .culture-list {
+        max-height: 200px;
+        overflow-y: auto;
+      }
+
+      .culture-item {
+        display: flex;
+        align-items: center;
+        padding: 8px;
+        margin: 5px 0;
+        background-color: rgba(0, 150, 255, 0.1);
+        border-radius: 5px;
+        cursor: pointer;
+      }
+
+      .culture-item:hover {
+        background-color: rgba(0, 150, 255, 0.2);
+      }
+
+      .culture-item-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 5px;
+        margin-right: 10px;
+        background-size: cover;
+        background-position: center;
+      }
+
+      .culture-item-name {
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      .culture-item-type {
+        font-size: 12px;
+        color: #88ccff;
+      }
+
+      .back-home {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        background-color: rgba(0, 30, 60, 0.8);
+        padding: 10px 20px;
+        border-radius: 8px;
+        color: white;
+        font-size: 14px;
+        border: 1px solid rgba(0, 150, 255, 0.4);
+        z-index: 10;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .back-home:hover {
+        background-color: rgba(0, 150, 255, 0.3);
+        box-shadow: 0 0 15px rgba(0, 150, 255, 0.4);
       }
     </style>
   </head>
@@ -129,19 +186,21 @@
       </div>
     </div>
     <div class="loading" id="loading">加载中...</div>
-    <div id="culture-card" class="culture-card">
+    <div id="culture-card" class="culture-card" style="display: none;">
       <div class="culture-card-content">
         <h2 id="culture-title">地区文化</h2>
         <img
           id="culture-image"
           src=""
           alt="文化图片"
-          style="width: 100%; height: auto; border-radius: 8px"
+          style="width: 100%; height: 150px; object-fit: cover; border-radius: 8px"
         />
         <p id="culture-description">这里是地区的文化介绍。</p>
+        <div id="culture-list" class="culture-list"></div>
         <button id="culture-button" class="culture-button">了解更多</button>
       </div>
     </div>
+    <div class="back-home" onclick="goBackHome()">返回首页</div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script
       src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r17/Stats.min.js"
@@ -150,7 +209,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.6.1/d3.min.js"></script>
     <script>
-      // 基础场景设置
       const scene = new THREE.Scene()
       const camera = new THREE.PerspectiveCamera(
         60,
@@ -166,74 +224,64 @@
       renderer.setClearColor(0x000a14, 1)
       document.body.appendChild(renderer.domElement)
 
-      // 广东省各地区定义及城市划分
       const regionDefinitions = {
         'pearl-delta': {
           name: '珠三角地区',
           color: 0x0088cc,
           highlightColor: 0x00a8ff,
-          cities: [
-            '广州市',
-            '深圳市',
-            '珠海市',
-            '佛山市',
-            '中山市',
-            '东莞市',
-            '惠州市',
-            '江门市',
-            '肇庆市'
-          ],
-          cityDistrictCodes: [
-            '440100', // 广州市
-            '440300', // 深圳市
-            '440400', // 珠海市
-            '440600', // 佛山市
-            '442000', // 中山市
-            '441900', // 东莞市
-            '441300', // 惠州市
-            '440700', // 江门市
-            '441200' // 肇庆市
-          ]
+          cities: ['广州市', '深圳市', '珠海市', '佛山市', '中山市', '东莞市', '惠州市', '江门市', '肇庆市'],
+          cityDistrictCodes: ['440100', '440300', '440400', '440600', '442000', '441900', '441300', '440700', '441200']
         },
         east: {
           name: '粤东地区',
           color: 0x00cc88,
           highlightColor: 0x00ffaa,
           cities: ['汕头市', '潮州市', '揭阳市', '汕尾市'],
-          cityDistrictCodes: [
-            '440500', // 汕头市
-            '445100', // 潮州市
-            '445200', // 揭阳市
-            '441500' // 汕尾市
-          ]
+          cityDistrictCodes: ['440500', '445100', '445200', '441500']
         },
         west: {
           name: '粤西地区',
           color: 0x8800cc,
           highlightColor: 0xaa00ff,
           cities: ['湛江市', '茂名市', '阳江市'],
-          cityDistrictCodes: [
-            '440800', // 湛江市
-            '440900', // 茂名市
-            '441700' // 阳江市
-          ]
+          cityDistrictCodes: ['440800', '440900', '441700']
         },
         north: {
           name: '粤北地区',
           color: 0xcc8800,
           highlightColor: 0xff9900,
           cities: ['韶关市', '清远市', '梅州市', '河源市', '云浮市'],
-          cityDistrictCodes: [
-            '440200', // 韶关市
-            '441800', // 清远市
-            '441400', // 梅州市
-            '441600', // 河源市
-            '445300' // 云浮市
-          ]
+          cityDistrictCodes: ['440200', '441800', '441400', '441600', '445300']
         }
       }
 
-      // 光照设置
+      const heritageData = {
+        '珠三角地区': [
+          { name: '粤剧', type: '传统戏剧', image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Cantonese%20opera%20performance%20traditional%20costumes&image_size=landscape_4_3', description: '中国四大剧种之一，以粤语演唱' },
+          { name: '岭南画派', type: '传统美术', image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Lingnan%20Chinese%20painting%20mountains%20water&image_size=landscape_4_3', description: '融合中西绘画技法的现代中国画流派' },
+          { name: '广绣', type: '传统技艺', image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Cantonese%20embroidery%20colorful%20patterns&image_size=landscape_4_3', description: '中国四大名绣之一，针法细腻' },
+          { name: '沙湾飘色', type: '民俗活动', image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=traditional%20Chinese%20parade%20colorful%20costumes&image_size=landscape_4_3', description: '极具特色的民间艺术表演' }
+        ],
+        '粤东地区': [
+          { name: '潮剧', type: '传统戏剧', image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Teochew%20opera%20elegant%20costumes&image_size=landscape_4_3', description: '用潮州话演唱的地方戏曲' },
+          { name: '潮绣', type: '传统技艺', image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Chaozhou%20embroidery%20gold%20thread&image_size=landscape_4_3', description: '以金碧辉煌著称的刺绣艺术' },
+          { name: '英歌舞', type: '民俗舞蹈', image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Yingge%20dance%20traditional%20weapons&image_size=landscape_4_3', description: '阳刚威武的广场舞蹈' },
+          { name: '潮州木雕', type: '传统美术', image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Chaozhou%20wood%20carving%20intricate&image_size=landscape_4_3', description: '精雕细琢的木雕艺术' }
+        ],
+        '粤西地区': [
+          { name: '雷剧', type: '传统戏剧', image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Leizhou%20opera%20local%20style&image_size=landscape_4_3', description: '雷州方言戏曲' },
+          { name: '遂溪醒狮', type: '民俗活动', image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Chinese%20lion%20dance%20performance&image_size=landscape_4_3', description: '极具阳刚之美的狮舞' },
+          { name: '木偶戏', type: '传统戏剧', image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Chinese%20puppet%20show&image_size=landscape_4_3', description: '历史悠久的傀儡戏' },
+          { name: '端砚制作', type: '传统技艺', image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Chinese%20ink%20stone%20making&image_size=landscape_4_3', description: '中国四大名砚之首' }
+        ],
+        '粤北地区': [
+          { name: '客家山歌', type: '传统音乐', image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Hakka%20folk%20song%20mountain%20village&image_size=landscape_4_3', description: '客家文化的瑰宝' },
+          { name: '围龙屋建筑', type: '传统建筑', image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Hakka%20round%20house%20architecture&image_size=landscape_4_3', description: '独特的客家民居建筑' },
+          { name: '舞火龙', type: '民俗活动', image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=fire%20dragon%20dance%20festival&image_size=landscape_4_3', description: '壮观的民间节庆活动' },
+          { name: '竹编技艺', type: '传统技艺', image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=bamboo%20weaving%20craft&image_size=landscape_4_3', description: '精巧的竹艺编织' }
+        ]
+      }
+
       const ambientLight = new THREE.AmbientLight(0x404050, 0.8)
       scene.add(ambientLight)
 
@@ -241,67 +289,45 @@
       directionalLight.position.set(1, 1, 1)
       scene.add(directionalLight)
 
-      // 创建动态点光源
       const pointLight = new THREE.PointLight(0x00a8ff, 1, 100)
       pointLight.position.set(0, 10, 0)
       scene.add(pointLight)
 
-      // 添加光效动画
       function animateLight() {
         const time = Date.now() * 0.001
         pointLight.position.x = Math.sin(time) * 10
         pointLight.position.z = Math.cos(time) * 10
         requestAnimationFrame(animateLight)
       }
-
       animateLight()
-      
-      // 摄像机设置
+
       camera.position.set(0, 12, 20)
       camera.lookAt(0, 0, 0)
 
-      // 添加背景辉光
       const backgroundGlow = createBackgroundGlow()
       scene.add(backgroundGlow)
 
-      // 添加粒子系统
       addParticleSystem()
 
-      // 创建控制器
       let controls
       setupControls()
 
-      // 存储所有地区的3D对象
       const cityMeshes = {}
       const regionGroups = {}
       const mapGroup = new THREE.Group()
       scene.add(mapGroup)
 
-      // 加载广东省地图数据
       loadGuangdongMap()
 
-      // 加载地图数据函数
       async function loadGuangdongMap() {
         try {
-          // 加载广东省地理数据
-          // const response = await fetch(
-          //   "./广东省.json"
-          // );
-          // const geoData = await response.json();
           var url = 'https://geo.datav.aliyun.com/areas_v3/bound/440000_full.json'
-          console.log(url)
           var request = new XMLHttpRequest()
-          console.log(request)
-          request.open('get', url) // 设置请求方法与路径
-          request.send(null) // 读取本地，就不发送数据到服务器
+          request.open('get', url)
+          request.send(null)
           request.onload = function () {
-            // XHR对象获取到返回信息后执行
-            console.log(request)
             if (request.status == 200) {
-              // 返回状态为200，即为数据获取成功
               var json = JSON.parse(request.responseText)
-              console.log(json)
-              // 创建广东省3D地图
               createGuangdongMap(json)
             }
           }
@@ -311,10 +337,7 @@
         }
       }
 
-      // 创建广东3D地图
       function createGuangdongMap(json) {
-        console.log(111)
-        // 首先为四个区域创建组
         Object.keys(regionDefinitions).forEach((regionId) => {
           const group = new THREE.Group()
           group.name = regionId
@@ -323,92 +346,56 @@
           mapGroup.add(group)
         })
 
-        console.log(json)
-
-        // 处理地图数据
         if (json && json.features) {
-          // 获取中心点，用于定位
           const bounds = calculateBounds(json.features)
           const center = [(bounds.minX + bounds.maxX) / 2, (bounds.minY + bounds.maxY) / 2]
-
-          // 缩放因子，用于将经纬度适配到合适的3D空间
           const scale = 20 / Math.max(bounds.maxX - bounds.minX, bounds.maxY - bounds.minY)
 
-          // 处理每个城市数据
           json.features.forEach((feature) => {
-            // 获取城市编码
             const adcode = feature.properties.adcode
-
-            // 确定城市所属区域
             let regionId = determineRegion(adcode)
-
-            // console.log(regionId)
 
             if (regionId) {
               const regionData = regionDefinitions[regionId]
-
-              // 创建城市3D模型
               const cityMesh = createCityMesh(feature, center, scale, regionData)
-
-              // console.log(cityMesh,'cityMesh')
-
-              // 将城市添加到对应区域
               regionGroups[regionId].add(cityMesh)
-
-              // 存储城市网格，用于后续交互
               cityMeshes[adcode] = cityMesh
             }
           })
 
-          // 移除加载提示
           document.getElementById('loading').style.display = 'none'
         }
       }
 
-      // 确定城市所属区域
       function determineRegion(adcode) {
         for (const regionId in regionDefinitions) {
-          // console.log(adcode,'adcode')
           adcode = adcode.toString()
-          // console.log(regionDefinitions)
-          // console.log(regionId)
-          // console.log(regionDefinitions[regionId].cityDistrictCodes)
           if (regionDefinitions[regionId].cityDistrictCodes.includes(adcode)) {
-            // console.log('我的ID是：',regionId)
             return regionId
           }
         }
-        return null // 如果找不到匹配的区域，返回null
+        return null
       }
 
-      // 创建城市3D网格
       function createCityMesh(feature, center, scale, regionData) {
-        // 创建城市形状
         const shape = new THREE.Shape()
 
-        // 处理多边形坐标
         const coordinates =
           feature.geometry.type === 'MultiPolygon'
             ? feature.geometry.coordinates[0][0]
             : feature.geometry.coordinates[0]
 
-        // 确保有至少3个点来形成一个多边形
         if (coordinates.length >= 3) {
           const firstPoint = coordinates[0]
-
-          // 移动到第一个点
           shape.moveTo((firstPoint[0] - center[0]) * scale, (firstPoint[1] - center[1]) * scale)
 
-          // 连接剩余点
           for (let i = 1; i < coordinates.length; i++) {
             const point = coordinates[i]
             shape.lineTo((point[0] - center[0]) * scale, (point[1] - center[1]) * scale)
           }
 
-          // 关闭形状
           shape.closePath()
 
-          // 创建3D几何体
           const extrudeSettings = {
             depth: 0.5,
             bevelEnabled: true,
@@ -419,7 +406,6 @@
 
           const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings)
 
-          // 创建材质
           const material = new THREE.MeshPhongMaterial({
             color: regionData.color,
             transparent: true,
@@ -428,10 +414,8 @@
             shininess: 30
           })
 
-          // 创建网格
           const mesh = new THREE.Mesh(geometry, material)
 
-          // 添加边缘线
           const edges = new THREE.EdgesGeometry(geometry)
           const line = new THREE.LineSegments(
             edges,
@@ -442,7 +426,6 @@
             })
           )
 
-          // 设置网格属性
           mesh.userData = {
             adcode: feature.properties.adcode,
             name: feature.properties.name,
@@ -450,12 +433,9 @@
             regionData: regionData
           }
 
-          // 创建组合对象
           const group = new THREE.Group()
           group.add(mesh)
           group.add(line)
-
-          // 设置组合对象属性
           group.userData = {
             adcode: feature.properties.adcode,
             name: feature.properties.name,
@@ -466,12 +446,10 @@
           return group
         }
 
-        // 如果没有足够的点，返回一个空组
         const emptyGroup = new THREE.Group()
         return emptyGroup
       }
 
-      // 计算地图边界
       function calculateBounds(features) {
         let minX = Infinity
         let minY = Infinity
@@ -495,13 +473,9 @@
         return { minX, minY, maxX, maxY }
       }
 
-      // 创建控制器
       function setupControls() {
-        // 在这里可以添加OrbitControls等控制器
-        // 示例: controls = new THREE.OrbitControls(camera, renderer.domElement);
       }
 
-      // 添加背景辉光效果
       function createBackgroundGlow() {
         const geometry = new THREE.SphereGeometry(30, 32, 32)
         const material = new THREE.MeshBasicMaterial({
@@ -513,7 +487,6 @@
         return new THREE.Mesh(geometry, material)
       }
 
-      // 添加粒子系统
       function addParticleSystem() {
         const particlesGeometry = new THREE.BufferGeometry()
         const particleCount = 1000
@@ -536,19 +509,17 @@
         const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial)
         scene.add(particlesMesh)
 
-        // 添加粒子系统动画
         function animateParticles() {
           particlesMesh.rotation.y += 0.0005
           requestAnimationFrame(animateParticles)
         }
-
         animateParticles()
       }
 
       function createStarfield() {
         const starGeometry = new THREE.BufferGeometry()
         const starVertices = []
-        const starCount = 1000 // 星星数量
+        const starCount = 1000
 
         for (let i = 0; i < starCount; i++) {
           const x = (Math.random() - 0.5) * 2000
@@ -570,49 +541,37 @@
         scene.add(starField)
       }
 
-      // 在初始化场景时调用
       createStarfield()
 
-      // 处理鼠标事件
       const raycaster = new THREE.Raycaster()
       const mouse = new THREE.Vector2()
       let hoveredRegion = null
       let selectedRegion = null
 
-      // 鼠标移动事件
       function onMouseMove(event) {
-        // 计算鼠标位置
         mouse.x = (event.clientX / window.innerWidth) * 2 - 1
         mouse.y = -(event.clientY / window.innerHeight) * 2 + 1
 
-        // 射线检测
         raycaster.setFromCamera(mouse, camera)
-
-        // 检测与所有城市网格的交叉
         const intersects = raycaster.intersectObjects(mapGroup.children, true)
 
-        // 重置所有区域的高亮
         Object.keys(regionGroups).forEach((regionId) => {
           if (regionGroups[regionId] !== selectedRegion) {
             resetHighlight(regionGroups[regionId])
           }
         })
 
-        // 处理悬停
         if (intersects.length > 0) {
           let object = intersects[0].object
 
-          // 向上查找，找到城市组或区域组
           while (object.parent && !object.userData.regionId && !object.userData.adcode) {
             object = object.parent
           }
 
-          // 如果找到了城市或区域
           if (
             (object.userData.regionId || object.userData.adcode) &&
             (!selectedRegion || selectedRegion.name !== object.userData.regionId)
           ) {
-            // 获取对应的区域组
             const regionId =
               object.userData.regionId ||
               (object.userData.adcode ? determineRegion(object.userData.adcode) : null)
@@ -627,90 +586,72 @@
         }
       }
 
-      // 鼠标点击事件
       function onClick(event) {
         if (hoveredRegion) {
-          // 恢复之前选中的区域
           if (selectedRegion && selectedRegion !== hoveredRegion) {
             resetHighlight(selectedRegion)
           }
 
-          // 设置新选中的区域
           selectedRegion = hoveredRegion
           setHighlight(selectedRegion, true)
-
-          // 更新信息面板
           updateRegionInfo(selectedRegion.userData)
-
-          // 相机聚焦动画
           focusCameraOnRegion(selectedRegion)
-
-          // 浮动动画效果
           animateSelectedRegion(selectedRegion)
-
-          // 显示文化介绍卡片
           showCultureCard(selectedRegion.userData)
         }
       }
 
-      // 显示文化介绍卡片
       function showCultureCard(regionData) {
         const cultureCard = document.getElementById('culture-card')
         const cultureTitle = document.getElementById('culture-title')
         const cultureImage = document.getElementById('culture-image')
         const cultureDescription = document.getElementById('culture-description')
+        const cultureList = document.getElementById('culture-list')
         const cultureButton = document.getElementById('culture-button')
 
-        // 根据区域数据设置卡片内容
-        cultureTitle.textContent = `${regionData.name} 文化`
+        cultureTitle.textContent = `${regionData.name} 非遗文化`
         cultureDescription.textContent = getCultureDescription(regionData.name)
-        cultureImage.src = getCultureImage(regionData.name)
+        cultureImage.src = getRegionImage(regionData.name)
 
-        // 设置按钮点击事件
+        const heritages = heritageData[regionData.name] || []
+        cultureList.innerHTML = heritages.map((item) => `
+          <div class="culture-item">
+            <div class="culture-item-icon" style="background-image: url('${item.image}')"></div>
+            <div>
+              <div class="culture-item-name">${item.name}</div>
+              <div class="culture-item-type">${item.type}</div>
+            </div>
+          </div>
+        `).join('')
+
         cultureButton.onclick = () => {
-          window.location.href = getCulturePageUrl(regionData.name)
+          window.location.href = '/heritage'
         }
 
-        // 显示卡片
         cultureCard.style.display = 'block'
       }
 
-      // 获取文化介绍（示例）
       function getCultureDescription(regionName) {
         const descriptions = {
-          珠三角地区: '珠三角地区是广东省的经济中心，拥有丰富的岭南文化。',
-          粤东地区: '粤东地区以潮汕文化闻名，美食和传统工艺独具特色。',
-          粤西地区: '粤西地区有独特的雷州文化和丰富的海洋资源。',
-          粤北地区: '粤北地区以客家文化为主，山水风光秀丽。'
+          '珠三角地区': '珠三角地区是岭南文化的核心区域，汇集了广府文化的精华。这里是非遗文化最集中、最丰富的地区，粤剧、广绣、岭南画派等享誉海内外。',
+          '粤东地区': '粤东地区以潮汕文化为代表，保留了丰富的传统民俗。潮剧、英歌舞、潮绣等文化瑰宝在这里代代相传，展现了独特的地域风情。',
+          '粤西地区': '粤西地区拥有独特的雷州文化和海洋文化。雷剧、醒狮、木偶戏等民间艺术形式独具特色，端砚制作更是闻名天下。',
+          '粤北地区': '粤北地区是客家文化的重要发源地，客家山歌、围龙屋建筑等文化遗产承载着客家人的历史记忆，展现了山区独特的文化风貌。'
         }
         return descriptions[regionName] || '暂无文化介绍。'
       }
 
-      // 获取文化图片（示例）
-      function getCultureImage(regionName) {
+      function getRegionImage(regionName) {
         const images = {
-          珠三角地区: 'https://example.com/pearl-delta.jpg',
-          粤东地区: 'https://example.com/east-guangdong.jpg',
-          粤西地区: 'C:/UsersHASEE/Desktop/微信图片_20240921001747.jpg',
-          粤北地区: 'https://example.com/north-guangdong.jpg'
+          '珠三角地区': 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Pearl%20River%20Delta%20Guangzhou%20cityscape%20modern%20traditional&image_size=landscape_16_9',
+          '粤东地区': 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=eastern%20Guangdong%20Chaozhou%20ancient%20city%20temples&image_size=landscape_16_9',
+          '粤西地区': 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=western%20Guangdong%20coastal%20fishing%20villages&image_size=landscape_16_9',
+          '粤北地区': 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=north%20Guangdong%20mountain%20Hakka%20villages&image_size=landscape_16_9'
         }
-        return images[regionName] || 'https://example.com/default.jpg'
+        return images[regionName] || 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Guangdong%20cultural%20heritage%20traditional%20art&image_size=landscape_16_9'
       }
 
-      // 获取文化模块页面 URL（示例）
-      function getCulturePageUrl(regionName) {
-        const urls = {
-          珠三角地区: '/culture/pearl-delta',
-          粤东地区: '/',
-          粤西地区: '/culture/west-guangdong',
-          粤北地区: '/culture/north-guangdong'
-        }
-        return urls[regionName] || '/culture'
-      }
-
-      // 相机聚焦动画
       function focusCameraOnRegion(region) {
-        // 计算区域中心和大小
         const box = new THREE.Box3().setFromObject(region)
         const center = new THREE.Vector3()
         box.getCenter(center)
@@ -718,7 +659,6 @@
         const size = new THREE.Vector3()
         box.getSize(size)
 
-        // 设置相机位置
         gsap.to(camera.position, {
           duration: 1,
           x: center.x,
@@ -731,9 +671,7 @@
         })
       }
 
-      // 选中区域动画
       function animateSelectedRegion(region) {
-        // 浮动动画
         gsap.to(region.position, {
           duration: 0.5,
           y: 0.5,
@@ -743,31 +681,24 @@
         })
       }
 
-      // 高亮显示
       function setHighlight(regionGroup, isSelected = false) {
-        // 获取区域数据
         const regionData = regionGroup.userData
 
-        // 高亮所有子城市
         regionGroup.traverse((child) => {
           if (child.isMesh && child.material) {
-            // 设置高亮颜色
             child.material.color.setHex(regionData.highlightColor)
             child.material.opacity = 0.9
 
-            // 添加发光效果
             child.material.emissive = new THREE.Color(regionData.highlightColor)
             child.material.emissiveIntensity = isSelected ? 0.3 : 0.2
           }
 
-          // 处理线框
           if (child.isLineSegments && child.material) {
             child.material.color.setHex(0x00ffff)
             child.material.opacity = isSelected ? 0.9 : 0.8
           }
         })
 
-        // 添加缩放效果
         if (isSelected) {
           regionGroup.scale.set(1.1, 1.1, 1.1)
         } else {
@@ -775,51 +706,42 @@
         }
       }
 
-      // 重置高亮
       function resetHighlight(regionGroup) {
-        // 获取区域数据
         const regionData = regionGroup.userData
 
-        // 重置所有子城市
         regionGroup.traverse((child) => {
           if (child.isMesh && child.material) {
-            // 恢复原始颜色
             child.material.color.setHex(regionData.color)
             child.material.opacity = 0.9
 
-            // 移除发光效果
             child.material.emissive = new THREE.Color(0x000000)
             child.material.emissiveIntensity = 0
           }
 
-          // 处理线框
           if (child.isLineSegments && child.material) {
             child.material.color.setHex(0x00ffff)
             child.material.opacity = 0.7
           }
         })
 
-        // 重置缩放
         regionGroup.scale.set(1, 1, 1)
       }
 
-      // 更新信息面板
       function updateRegionInfo(regionData) {
         const infoElement = document.getElementById('region-info')
         infoElement.innerHTML = `
-                <h3 style="margin: 5px 0; color: #00a8ff;">${regionData.name}</h3>
-                <div>城市: ${regionData.cities.join('、')}</div>
-            `
+          <h3 style="margin: 5px 0; color: #00a8ff;">${regionData.name}</h3>
+          <div>城市: ${regionData.cities.join('、')}</div>
+          <div style="color: #88ccff;">非遗项目: ${(heritageData[regionData.name] || []).length} 项</div>
+        `
       }
 
-      // 窗口大小调整处理
       function onWindowResize() {
         camera.aspect = window.innerWidth / window.innerHeight
         camera.updateProjectionMatrix()
         renderer.setSize(window.innerWidth, window.innerHeight)
       }
 
-      // 浮动动画
       function floatAnimation() {
         const time = Date.now() * 0.001
 
@@ -832,33 +754,19 @@
         )
       }
 
-      // 自动旋转
-      function autoRotate() {
-        if (!selectedRegion) {
-          mapGroup.rotation.y += 0.002
-        }
-      }
-
-      // 渲染动画
       function animate() {
         requestAnimationFrame(animate)
-
-        // 自动旋转
-        // autoRotate();
-
-        // 浮动动画
         floatAnimation()
-
-        // 渲染场景
         renderer.render(scene, camera)
       }
 
-      // 注册事件监听
+      function goBackHome() {
+        window.parent.location.href = '/home'
+      }
+
       window.addEventListener('mousemove', onMouseMove, false)
       window.addEventListener('click', onClick, false)
       window.addEventListener('resize', onWindowResize, false)
-
-      // 开始动画
       animate()
     </script>
   </body>
