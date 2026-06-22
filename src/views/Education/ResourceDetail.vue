@@ -39,12 +39,18 @@ const fetchResources = async () => {
   }
 }
 
-const imageList = computed(() => resourceList.value.filter(i => i.mediaType === 1))
-const videoList = computed(() => resourceList.value.filter(i => i.mediaType === 2))
-const audioList = computed(() => resourceList.value.filter(i => i.mediaType === 3))
+const imageList = computed(() =>
+  resourceList.value.filter((i) => i.mediaType === 1)
+)
+const videoList = computed(() =>
+  resourceList.value.filter((i) => i.mediaType === 2)
+)
+const audioList = computed(() =>
+  resourceList.value.filter((i) => i.mediaType === 3)
+)
 
 // 获取所有图片的URL列表，用于预览
-const previewSrcList = computed(() => imageList.value.map(item => item.url))
+const previewSrcList = computed(() => imageList.value.map((item) => item.url))
 
 onMounted(() => {
   if (!projectId) {
@@ -80,9 +86,13 @@ onMounted(() => {
             <el-empty description="暂无图片资源" />
           </div>
           <div v-else class="resource-grid image-grid">
-            <div v-for="(item, index) in imageList" :key="item.id" class="grid-item">
-              <el-image 
-                :src="item.url" 
+            <div
+              v-for="(item, index) in imageList"
+              :key="item.id"
+              class="grid-item"
+            >
+              <el-image
+                :src="item.url"
                 :preview-src-list="previewSrcList"
                 :initial-index="index"
                 fit="cover"
@@ -93,16 +103,25 @@ onMounted(() => {
             </div>
           </div>
         </el-tab-pane>
-        
+
         <!-- 视频资源 -->
         <el-tab-pane label="视频影像" name="video">
           <div v-if="videoList.length === 0" class="empty-state">
             <el-empty description="暂无视频资源" />
           </div>
           <div v-else class="resource-grid video-grid">
-            <div v-for="item in videoList" :key="item.id" class="grid-item video-item">
+            <div
+              v-for="item in videoList"
+              :key="item.id"
+              class="grid-item video-item"
+            >
               <div class="video-wrapper">
-                <video :src="item.url" :poster="item.coverUrl" controls preload="metadata"></video>
+                <video
+                  :src="item.url"
+                  :poster="item.coverUrl"
+                  controls
+                  preload="metadata"
+                ></video>
               </div>
               <div class="item-info">
                 <h3>{{ item.title || '未命名视频' }}</h3>
@@ -111,7 +130,7 @@ onMounted(() => {
             </div>
           </div>
         </el-tab-pane>
-        
+
         <!-- 音频资源 -->
         <el-tab-pane label="音频资料" name="audio">
           <div v-if="audioList.length === 0" class="empty-state">
@@ -120,9 +139,9 @@ onMounted(() => {
           <div v-else class="audio-list">
             <div v-for="item in audioList" :key="item.id" class="audio-item">
               <div class="audio-cover">
-                <el-image 
-                  :src="item.coverUrl || projectInfo.coverImage" 
-                  fit="cover" 
+                <el-image
+                  :src="item.coverUrl || projectInfo.coverImage"
+                  fit="cover"
                   class="cover-img"
                 >
                   <template #error>
@@ -152,7 +171,7 @@ onMounted(() => {
 
 .header-section {
   margin-bottom: 40px;
-  
+
   .back-btn {
     display: inline-flex;
     align-items: center;
@@ -161,11 +180,11 @@ onMounted(() => {
     color: #606266;
     margin-bottom: 20px;
     transition: color 0.3s;
-    
+
     &:hover {
-      color: #409EFF;
+      color: #409eff;
     }
-    
+
     .el-icon {
       margin-right: 5px;
     }
@@ -190,14 +209,14 @@ onMounted(() => {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 24px;
-  
+
   .grid-item {
     background: #fff;
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
     transition: transform 0.3s ease;
-    
+
     &:hover {
       transform: translateY(-5px);
       box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
@@ -212,7 +231,7 @@ onMounted(() => {
     height: 200px;
     display: block;
   }
-  
+
   .item-title {
     padding: 12px;
     font-size: 14px;
@@ -228,23 +247,23 @@ onMounted(() => {
   .video-wrapper {
     width: 100%;
     background: #000;
-    
+
     video {
       width: 100%;
       height: 200px;
       display: block;
     }
   }
-  
+
   .item-info {
     padding: 16px;
-    
+
     h3 {
       margin: 0 0 8px 0;
       font-size: 16px;
       color: #303133;
     }
-    
+
     p {
       margin: 0;
       font-size: 13px;
@@ -263,7 +282,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  
+
   .audio-item {
     display: flex;
     align-items: center;
@@ -271,7 +290,7 @@ onMounted(() => {
     background: #fff;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    
+
     .audio-cover {
       width: 60px;
       height: 60px;
@@ -294,16 +313,16 @@ onMounted(() => {
         color: #909399;
       }
     }
-    
+
     .audio-info {
       flex: 1;
-      
+
       h3 {
         margin: 0 0 10px 0;
         font-size: 16px;
         color: #303133;
       }
-      
+
       .audio-player {
         width: 100%;
         height: 32px;

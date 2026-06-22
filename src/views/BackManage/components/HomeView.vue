@@ -9,7 +9,13 @@
         <div class="info-row">
           <span class="info-label">角色：</span>
           <el-tag
-            :type="userInfo.role === '超级管理员' ? 'danger' : (userInfo.role === '普通管理员' ? 'warning' : 'success')"
+            :type="
+              userInfo.role === '超级管理员'
+                ? 'danger'
+                : userInfo.role === '普通管理员'
+                  ? 'warning'
+                  : 'success'
+            "
             effect="light"
           >
             {{ userInfo.role }}

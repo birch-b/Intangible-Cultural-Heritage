@@ -42,8 +42,8 @@ const form1 = reactive({
   name: '',
   password: '',
   password1: '',
-  phone: '',
-  yzm: ''
+  email: '',
+  emailCode: ''
 })
 const rules1 = reactive({
   name: [
@@ -83,11 +83,11 @@ const rules1 = reactive({
       trigger: 'blur'
     }
   ],
-  phone: [
-    { required: true, message: '请输入手机号', trigger: 'blur' },
-    { pattern: /^1[3-9]\d{9}$/, message: '请输入有效的手机号', trigger: 'blur' }
+  email: [
+    { required: true, message: '请输入邮箱', trigger: 'blur' },
+    { pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, message: '请输入有效的邮箱地址', trigger: 'blur' }
   ],
-  yzm: [{ required: true, message: '请输入验证码', trigger: 'blur' }]
+  emailCode: [{ required: true, message: '请输入验证码', trigger: 'blur' }]
 })
 
 // 判断登录注册页面显示隐藏
@@ -115,31 +115,44 @@ const register = (event) => {
 
 const min = ref(0)
 const istrue = ref(false)
-// 获取验证码
+const isSendingCode = ref(false)
+
+const validateEmail = (email) => {
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+  return emailRegex.test(email)
+}
+
 const count = async () => {
-  if (!form1.phone) {
-    ElMessage.warning('请先输入手机号')
+  if (!form1.email) {
+    ElMessage.warning('请先输入邮箱')
     return
   }
-  istrue.value = true
-  min.value = 60
+  if (!validateEmail(form1.email)) {
+    ElMessage.warning('请输入有效的邮箱地址')
+    return
+  }
+  if (isSendingCode.value) {
+    return
+  }
+  isSendingCode.value = true
   try {
-    await userStore.getCode(form1.phone)
-    ElMessage.success('验证码已发送')
+    await userStore.getCode(form1.email)
+    ElMessage.success('验证码已发送至您的邮箱')
+    istrue.value = true
+    min.value = 60
+    let timer = setInterval(() => {
+      min.value--
+      if (min.value === 0) {
+        clearInterval(timer)
+        istrue.value = false
+      }
+    }, 1000)
   } catch (error) {
     console.error('获取验证码失败', error)
     ElMessage.error('获取验证码失败，请稍后重试')
-    istrue.value = false
-    min.value = 0
-    return
+  } finally {
+    isSendingCode.value = false
   }
-  let timer = setInterval(() => {
-    min.value--
-    if (min.value === 0) {
-      clearInterval(timer)
-      istrue.value = false
-    }
-  }, 1000)
 }
 
 const handleLogin = async () => {
@@ -160,27 +173,33 @@ const handleLogin = async () => {
   })
 }
 
+const isRegistering = ref(false)
+
 const handleRegister = async () => {
   if (!registerFormRef.value) return
   await registerFormRef.value.validate(async (valid) => {
     if (valid) {
+      if (isRegistering.value) return
+      isRegistering.value = true
       try {
         await userStore.userRegister({
           username: form1.name,
           password: form1.password,
-          phone: form1.phone
+          mail: form1.email,
+          emailCode: form1.emailCode
         })
         ElMessage.success('注册成功，请登录')
-        // 清空表单
         form1.name = ''
         form1.password = ''
         form1.password1 = ''
-        form1.phone = ''
-        form1.yzm = ''
-        // 重置表单验证状态
+        form1.email = ''
+        form1.emailCode = ''
         registerFormRef.value.resetFields()
       } catch (error) {
-        console.error(error)
+        console.error('注册失败', error)
+        ElMessage.error('注册失败，请检查信息后重试')
+      } finally {
+        isRegistering.value = false
       }
     }
   })
@@ -273,39 +292,37 @@ const handleRegister = async () => {
             />
           </el-form-item>
           <el-form-item
-            label="请输入手机号"
+            label="邮箱"
             label-position="right"
-            prop="phone"
+            prop="email"
           >
             <el-input
-              v-model="form1.phone"
+              v-model="form1.email"
               class="input"
-              placeholder="请输入手机号"
+              placeholder="请输入邮箱"
             />
+          </el-form-item>
+          <el-form-item class="center">
+            <el-button
+              class="code-btn"
+              @click="count"
+              :disabled="istrue || isSendingCode"
+              >{{ min === 0 ? '获取验证码' : min + 's' }}</el-button
+            >
           </el-form-item>
           <el-form-item
             label="验证码"
             label-position="right"
-            prop="yzm"
-            class="yzm-item"
+            prop="emailCode"
           >
-            <div class="yzm-wrapper">
-              <el-input
-                style="flex: 1"
-                v-model="form1.yzm"
-                class="input"
-                placeholder="请输入验证码"
-              />
-              <el-button
-                style="width: 100px; margin-left: 12px"
-                @click="count"
-                :disabled="istrue"
-                >{{ min === 0 ? '获取验证码' : min }}</el-button
-              >
-            </div>
+            <el-input
+              v-model="form1.emailCode"
+              class="input"
+              placeholder="请输入验证码"
+            />
           </el-form-item>
           <el-form-item class="center">
-            <el-button type="primary" @click="handleRegister">注册</el-button>
+            <el-button type="primary" @click="handleRegister" :loading="isRegistering">注册</el-button>
           </el-form-item>
         </el-form>
       </div>
@@ -449,6 +466,10 @@ p {
         width: 150px;
         color: white;
       }
+      .code-btn {
+        width: auto !important;
+        min-width: 120px;
+      }
       .bewetween {
         :deep(.el-form-item__content) {
           display: flex !important;
@@ -479,6 +500,7 @@ p {
         width: 100%;
         max-width: 250px;
       }
+      
     }
   }
   .left,

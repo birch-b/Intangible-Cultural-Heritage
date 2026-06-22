@@ -35,9 +35,9 @@ export const useUserStore = defineStore(
       await registerAPI(data)
     }
 
-    // 获取验证码
-    const getCode = async (phone) => {
-      const res = await getCodeAPI(phone)
+    // 获取邮箱验证码
+    const getCode = async (email) => {
+      const res = await getCodeAPI(email)
       return res
     }
 

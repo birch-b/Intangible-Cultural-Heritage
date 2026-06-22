@@ -9,7 +9,12 @@
 
       <el-form :inline="true" :model="queryParams" class="demo-form-inline">
         <el-form-item label="反馈类型">
-          <el-select v-model="queryParams.type" placeholder="全部类型" clearable style="width: 150px">
+          <el-select
+            v-model="queryParams.type"
+            placeholder="全部类型"
+            clearable
+            style="width: 150px"
+          >
             <el-option label="内容纠错" :value="1" />
             <el-option label="系统建议" :value="2" />
             <el-option label="其他" :value="3" />
@@ -17,7 +22,12 @@
         </el-form-item>
 
         <el-form-item label="处理状态">
-          <el-select v-model="queryParams.status" placeholder="全部状态" clearable style="width: 150px">
+          <el-select
+            v-model="queryParams.status"
+            placeholder="全部状态"
+            clearable
+            style="width: 150px"
+          >
             <el-option label="待处理" :value="0" />
             <el-option label="处理中" :value="1" />
             <el-option label="已解决" :value="2" />
@@ -31,17 +41,28 @@
         </el-form-item>
       </el-form>
 
-      <el-table v-loading="loading" :data="feedbackList" border style="width: 100%">
+      <el-table
+        v-loading="loading"
+        :data="feedbackList"
+        border
+        style="width: 100%"
+      >
         <el-table-column prop="id" label="ID" width="80" align="center" />
 
         <el-table-column label="反馈类型" width="120" align="center">
           <template #default="scope">
-            <el-tag :type="getTypeTag(scope.row.type)">{{ formatType(scope.row.type) }}</el-tag>
+            <el-tag :type="getTypeTag(scope.row.type)">{{
+              formatType(scope.row.type)
+            }}</el-tag>
           </template>
         </el-table-column>
 
         <el-table-column prop="title" label="标题" show-overflow-tooltip />
-        <el-table-column prop="content" label="反馈内容" show-overflow-tooltip />
+        <el-table-column
+          prop="content"
+          label="反馈内容"
+          show-overflow-tooltip
+        />
 
         <el-table-column label="图片" width="140" align="center">
           <template #default="scope">
@@ -55,7 +76,10 @@
                 :z-index="9999"
                 @error="onImageError(scope.row.images[0])"
               />
-              <div v-if="scope.row.images.length > 1" style="font-size: 12px; color: #909399">
+              <div
+                v-if="scope.row.images.length > 1"
+                style="font-size: 12px; color: #909399"
+              >
                 共{{ scope.row.images.length }}张
               </div>
             </div>
@@ -63,11 +87,18 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="contact" label="联系方式" width="150" show-overflow-tooltip />
+        <el-table-column
+          prop="contact"
+          label="联系方式"
+          width="150"
+          show-overflow-tooltip
+        />
 
         <el-table-column label="状态" width="100" align="center">
           <template #default="scope">
-            <el-tag :type="getStatusTag(scope.row.status)">{{ formatStatus(scope.row.status) }}</el-tag>
+            <el-tag :type="getStatusTag(scope.row.status)">{{
+              formatStatus(scope.row.status)
+            }}</el-tag>
           </template>
         </el-table-column>
 
@@ -105,10 +136,25 @@
       </div>
     </el-card>
 
-    <el-dialog v-model="dialogVisible" title="回复反馈" width="500px" @close="resetDialog">
-      <el-form ref="replyFormRef" :model="replyForm" :rules="replyRules" label-width="80px">
+    <el-dialog
+      v-model="dialogVisible"
+      title="回复反馈"
+      width="500px"
+      @close="resetDialog"
+    >
+      <el-form
+        ref="replyFormRef"
+        :model="replyForm"
+        :rules="replyRules"
+        label-width="80px"
+      >
         <el-form-item label="回复内容" prop="replyContent">
-          <el-input v-model="replyForm.replyContent" type="textarea" :rows="4" placeholder="请输入回复内容" />
+          <el-input
+            v-model="replyForm.replyContent"
+            type="textarea"
+            :rows="4"
+            placeholder="请输入回复内容"
+          />
         </el-form-item>
         <el-form-item label="更新状态" prop="status">
           <el-radio-group v-model="replyForm.status">
@@ -120,7 +166,12 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="submitReply" :loading="submitLoading">确定</el-button>
+          <el-button
+            type="primary"
+            @click="submitReply"
+            :loading="submitLoading"
+            >确定</el-button
+          >
         </span>
       </template>
     </el-dialog>
@@ -154,7 +205,9 @@ const replyForm = reactive({
 })
 
 const replyRules = {
-  replyContent: [{ required: true, message: '请输入回复内容', trigger: 'blur' }],
+  replyContent: [
+    { required: true, message: '请输入回复内容', trigger: 'blur' }
+  ],
   status: [{ required: true, message: '请选择更新后的状态', trigger: 'change' }]
 }
 

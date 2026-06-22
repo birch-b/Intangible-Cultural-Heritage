@@ -49,9 +49,19 @@
       @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="55" />
-      <el-table-column type="index" :index="indexMethod" label="序号" width="80" />
+      <el-table-column
+        type="index"
+        :index="indexMethod"
+        label="序号"
+        width="80"
+      />
       <!-- <el-table-column prop="id" label="ID" width="80" /> -->
-      <el-table-column prop="title" label="名称" width="80" show-overflow-tooltip />
+      <el-table-column
+        prop="title"
+        label="名称"
+        width="80"
+        show-overflow-tooltip
+      />
       <el-table-column prop="categoryName" label="分类" width="120" />
       <el-table-column prop="region" label="地区" width="100" />
       <el-table-column label="封面" width="100">
@@ -83,11 +93,7 @@
       </el-table-column>
       <el-table-column label="操作" width="180" fixed="right">
         <template #default="scope">
-          <el-button
-            size="small"
-            type="primary"
-            @click="handleEdit(scope.row)"
-          >
+          <el-button size="small" type="primary" @click="handleEdit(scope.row)">
             编辑
           </el-button>
           <el-button
@@ -122,17 +128,16 @@
       width="600px"
       top="5vh"
     >
-      <el-form
-        ref="formRef"
-        :model="form"
-        :rules="rules"
-        label-width="100px"
-      >
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="项目名称" prop="title">
           <el-input v-model="form.title" placeholder="请输入项目名称" />
         </el-form-item>
         <el-form-item label="所属类别" prop="categoryId">
-          <el-select v-model="form.categoryId" placeholder="请选择类别" style="width: 100%">
+          <el-select
+            v-model="form.categoryId"
+            placeholder="请选择类别"
+            style="width: 100%"
+          >
             <el-option
               v-for="item in categoryOptions"
               :key="item.id"
@@ -189,7 +194,11 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" :loading="submitLoading" @click="handleSubmit">
+          <el-button
+            type="primary"
+            :loading="submitLoading"
+            @click="handleSubmit"
+          >
             确定
           </el-button>
         </span>
@@ -202,7 +211,11 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="deleteDialogVisible = false">取消</el-button>
-          <el-button type="danger" :loading="deleteLoading" @click="confirmDelete">
+          <el-button
+            type="danger"
+            :loading="deleteLoading"
+            @click="confirmDelete"
+          >
             确定删除
           </el-button>
         </span>
@@ -265,8 +278,12 @@ const rowToDelete = ref(null) // 单个删除时的行对象
 // 表单校验规则
 const rules = {
   title: [{ required: true, message: '请输入项目名称', trigger: 'blur' }],
-  categoryId: [{ required: true, message: '请选择所属类别', trigger: 'change' }],
-  coverImage: [{ required: true, message: '请上传封面图片', trigger: 'change' }],
+  categoryId: [
+    { required: true, message: '请选择所属类别', trigger: 'change' }
+  ],
+  coverImage: [
+    { required: true, message: '请上传封面图片', trigger: 'change' }
+  ],
   summary: [{ required: true, message: '请输入简短摘要', trigger: 'blur' }]
 }
 
@@ -349,14 +366,14 @@ const handleEdit = async (row) => {
   formMode.value = 'edit'
   // 先重置表单，避免旧数据残留
   resetForm()
-  
+
   // 基础数据回显
   Object.assign(form, row)
   form.status = Number(row.status)
-  
+
   // 打开弹窗（此时可能 content 为空）
   dialogVisible.value = true
-  
+
   // 调用详情接口获取完整数据（主要是 content）
   try {
     const res = await getHeritageDetailAPI(row.id)
@@ -366,7 +383,9 @@ const handleEdit = async (row) => {
     }
   } catch (error) {
     console.error('获取项目详情失败', error)
-    ElMessage.warning('获取详细信息失败，请重试: ' + (error.message || '未知错误'))
+    ElMessage.warning(
+      '获取详细信息失败，请重试: ' + (error.message || '未知错误')
+    )
   }
 }
 
@@ -415,7 +434,8 @@ const handleSubmit = async () => {
     if (valid) {
       submitLoading.value = true
       try {
-        const api = formMode.value === 'add' ? createHeritageItem : updateHeritageItem
+        const api =
+          formMode.value === 'add' ? createHeritageItem : updateHeritageItem
         const res = await api(form)
         if (res.code === '0') {
           ElMessage.success(formMode.value === 'add' ? '新增成功' : '更新成功')
@@ -463,7 +483,9 @@ const confirmDelete = async () => {
       }
     } else {
       // 批量删除
-      const promises = selectedRows.value.map(row => deleteHeritageItem(row.id))
+      const promises = selectedRows.value.map((row) =>
+        deleteHeritageItem(row.id)
+      )
       await Promise.all(promises)
       ElMessage.success(`成功删除 ${selectedRows.value.length} 项`)
       selectedRows.value = []

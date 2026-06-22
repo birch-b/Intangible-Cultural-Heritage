@@ -1,11 +1,11 @@
 import request from '@/utils/request'
 
-// 获取验证码
-export const getCodeAPI = (phone) => {
+// 获取邮箱验证码
+export const getCodeAPI = (email) => {
   return request({
-    url: '/admin/v1/user/code',
-    method: 'get',
-    params: { phone }
+    url: '/admin/v1/user/email-code',
+    method: 'post',
+    data: { email }
   })
 }
 

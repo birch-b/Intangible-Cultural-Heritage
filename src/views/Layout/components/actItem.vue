@@ -24,12 +24,18 @@ const goToDetail = (id) => {
         <p>
           {{ item.description }}
         </p>
-        <span style="font-size: 1.2vh; display: flex; align-items: center; gap: 4px;">
+        <span
+          style="font-size: 1.2vh; display: flex; align-items: center; gap: 4px"
+        >
           <el-icon>
             <Calendar />
           </el-icon>
           {{ item.activityTime }}
-          <span style="margin-left: auto; color: #0062ff; cursor: pointer;" @click="goToDetail(item.id)">详情</span>
+          <span
+            style="margin-left: auto; color: #0062ff; cursor: pointer"
+            @click="goToDetail(item.id)"
+            >详情</span
+          >
         </span>
       </div>
     </div>
@@ -55,7 +61,9 @@ const goToDetail = (id) => {
     flex-direction: column;
     justify-content: space-between;
     padding-bottom: 2vh;
-    transition: transform 0.3s, box-shadow 0.3s;
+    transition:
+      transform 0.3s,
+      box-shadow 0.3s;
 
     &:hover {
       transform: translateY(-5px);

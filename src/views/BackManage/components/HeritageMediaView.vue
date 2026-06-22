@@ -21,10 +21,10 @@
         @clear="handleSearch"
         @keyup.enter="handleSearch"
       />
-      <el-select 
-        v-model="queryForm.sourceType" 
-        placeholder="资源来源" 
-        clearable 
+      <el-select
+        v-model="queryForm.sourceType"
+        placeholder="资源来源"
+        clearable
         style="width: 120px"
         @change="handleSearch"
       >
@@ -32,10 +32,10 @@
         <el-option label="媒体关注" :value="1" />
         <el-option label="文化讲堂" :value="2" />
       </el-select>
-      <el-select 
-        v-model="queryForm.mediaType" 
-        placeholder="资源类型" 
-        clearable 
+      <el-select
+        v-model="queryForm.mediaType"
+        placeholder="资源类型"
+        clearable
         style="width: 120px"
         @change="handleSearch"
       >
@@ -43,7 +43,7 @@
         <el-option label="视频" :value="2" />
         <el-option label="音频" :value="3" />
       </el-select>
-      
+
       <!-- 关联项目筛选 -->
       <el-select
         v-model="queryForm.itemId"
@@ -60,18 +60,13 @@
           :value="item.id"
         />
       </el-select>
-      
+
       <el-button :icon="Search" @click="handleSearch">查询</el-button>
       <el-button @click="resetFilters">重置</el-button>
     </div>
 
     <!-- 资源列表 -->
-    <el-table 
-      v-loading="loading"
-      :data="mediaList" 
-      stripe 
-      style="width: 100%"
-    >
+    <el-table v-loading="loading" :data="mediaList" stripe style="width: 100%">
       <el-table-column type="index" label="序号" width="70" />
       <el-table-column label="预览" width="120">
         <template #default="scope">
@@ -86,36 +81,40 @@
             preview-teleported
           />
           <!-- 视频 -->
-          <div 
-            v-else-if="scope.row.mediaType === 2" 
+          <div
+            v-else-if="scope.row.mediaType === 2"
             class="media-thumbnail"
             @click="handlePreview(scope.row)"
           >
-            <el-image 
+            <el-image
               v-if="scope.row.coverUrl"
               :src="scope.row.coverUrl"
               class="thumbnail-content"
               fit="cover"
             />
-            <video 
+            <video
               v-show="!scope.row.coverUrl"
-              :src="scope.row.url" 
+              :src="scope.row.url"
               preload="metadata"
               class="thumbnail-content"
               @loadedmetadata="onMetadataLoaded($event, scope.row.id)"
             ></video>
             <span class="media-icon">🎬</span>
-            <span class="media-duration">{{ formatDuration(mediaDurations[scope.row.id]) }}</span>
-            <div class="play-overlay"><el-icon><VideoPlay /></el-icon></div>
+            <span class="media-duration">{{
+              formatDuration(mediaDurations[scope.row.id])
+            }}</span>
+            <div class="play-overlay">
+              <el-icon><VideoPlay /></el-icon>
+            </div>
           </div>
           <!-- 音频 -->
-          <div 
-            v-else-if="scope.row.mediaType === 3" 
+          <div
+            v-else-if="scope.row.mediaType === 3"
             class="media-thumbnail"
             @click="handlePreview(scope.row)"
           >
-            <el-image 
-              :src="scope.row.coverUrl || getHeritageCover(scope.row.itemId)" 
+            <el-image
+              :src="scope.row.coverUrl || getHeritageCover(scope.row.itemId)"
               class="thumbnail-content"
               fit="cover"
             >
@@ -126,14 +125,18 @@
               </template>
             </el-image>
             <span class="media-icon">🎵</span>
-            <span class="media-duration">{{ formatDuration(mediaDurations[scope.row.id]) }}</span>
-            <audio 
-              :src="scope.row.url" 
-              preload="metadata" 
-              style="display: none;"
+            <span class="media-duration">{{
+              formatDuration(mediaDurations[scope.row.id])
+            }}</span>
+            <audio
+              :src="scope.row.url"
+              preload="metadata"
+              style="display: none"
               @loadedmetadata="onMetadataLoaded($event, scope.row.id)"
             ></audio>
-            <div class="play-overlay"><el-icon><Headset /></el-icon></div>
+            <div class="play-overlay">
+              <el-icon><Headset /></el-icon>
+            </div>
           </div>
         </template>
       </el-table-column>
@@ -148,7 +151,9 @@
       </el-table-column>
       <el-table-column label="类型" width="80">
         <template #default="scope">
-          <el-tag effect="plain">{{ getMediaTypeName(scope.row.mediaType) }}</el-tag>
+          <el-tag effect="plain">{{
+            getMediaTypeName(scope.row.mediaType)
+          }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column label="关联项目" width="150" show-overflow-tooltip>
@@ -183,9 +188,7 @@
 
     <!-- 分页控件 -->
     <div class="pagination-container">
-      <div class="pagination-info">
-        共 {{ total }} 条记录
-      </div>
+      <div class="pagination-info">共 {{ total }} 条记录</div>
       <el-pagination
         v-model:current-page="currentPage"
         v-model:page-size="pageSize"
@@ -203,12 +206,7 @@
       :title="formMode === 'add' ? '新增资源' : '编辑资源'"
       width="600px"
     >
-      <el-form
-        ref="formRef"
-        :model="form"
-        :rules="rules"
-        label-width="100px"
-      >
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="资源来源" prop="sourceType">
           <el-radio-group v-model="form.sourceType">
             <el-radio :label="0">基础资源</el-radio>
@@ -218,10 +216,20 @@
         </el-form-item>
 
         <!-- 基础资源必须关联项目，其他类型可选 -->
-        <el-form-item 
-          label="关联项目" 
+        <el-form-item
+          label="关联项目"
           prop="itemId"
-          :rules="form.sourceType === 0 ? [{ required: true, message: '基础资源必须关联项目', trigger: 'change' }] : []"
+          :rules="
+            form.sourceType === 0
+              ? [
+                  {
+                    required: true,
+                    message: '基础资源必须关联项目',
+                    trigger: 'change'
+                  }
+                ]
+              : []
+          "
         >
           <el-select
             v-model="form.itemId"
@@ -240,7 +248,11 @@
         </el-form-item>
 
         <el-form-item label="资源类型" prop="mediaType">
-          <el-select v-model="form.mediaType" placeholder="请选择类型" style="width: 100%">
+          <el-select
+            v-model="form.mediaType"
+            placeholder="请选择类型"
+            style="width: 100%"
+          >
             <el-option label="图片" :value="1" />
             <el-option label="视频" :value="2" />
             <el-option label="音频" :value="3" />
@@ -262,27 +274,31 @@
           >
             <div v-if="form.url" class="preview-container">
               <img v-if="form.mediaType === 1" :src="form.url" class="avatar" />
-              <video v-else-if="form.mediaType === 2" :src="form.url" class="avatar"></video>
+              <video
+                v-else-if="form.mediaType === 2"
+                :src="form.url"
+                class="avatar"
+              ></video>
               <div v-else class="file-name">{{ form.url }}</div>
             </div>
             <div v-else>
-               <el-icon class="el-icon--upload"><upload-filled /></el-icon>
-               <div class="el-upload__text">
-                  拖拽文件到此处或 <em>点击上传</em>
-               </div>
+              <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+              <div class="el-upload__text">
+                拖拽文件到此处或 <em>点击上传</em>
+              </div>
             </div>
           </el-upload>
-          <el-progress 
-            v-if="isUploading" 
-            :percentage="uploadProgress" 
+          <el-progress
+            v-if="isUploading"
+            :percentage="uploadProgress"
             :status="uploadProgress === 100 ? 'success' : ''"
-            style="margin-top: 10px;"
+            style="margin-top: 10px"
           />
         </el-form-item>
 
-        <el-form-item 
-          v-if="form.mediaType === 2 || form.mediaType === 3" 
-          label="封面图" 
+        <el-form-item
+          v-if="form.mediaType === 2 || form.mediaType === 3"
+          label="封面图"
           prop="coverUrl"
         >
           <el-upload
@@ -297,17 +313,17 @@
               <img :src="form.coverUrl" class="avatar" />
             </div>
             <div v-else>
-               <el-icon class="el-icon--upload"><upload-filled /></el-icon>
-               <div class="el-upload__text">
-                  拖拽图片到此处或 <em>点击上传</em>
-               </div>
+              <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+              <div class="el-upload__text">
+                拖拽图片到此处或 <em>点击上传</em>
+              </div>
             </div>
           </el-upload>
-          <el-progress 
-            v-if="isCoverUploading" 
-            :percentage="coverUploadProgress" 
+          <el-progress
+            v-if="isCoverUploading"
+            :percentage="coverUploadProgress"
             :status="coverUploadProgress === 100 ? 'success' : ''"
-            style="margin-top: 10px;"
+            style="margin-top: 10px"
           />
         </el-form-item>
 
@@ -323,7 +339,11 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" :loading="submitLoading" @click="handleSubmit">
+          <el-button
+            type="primary"
+            :loading="submitLoading"
+            @click="handleSubmit"
+          >
             确定
           </el-button>
         </span>
@@ -338,41 +358,46 @@
       destroy-on-close
       @close="handleClosePreview"
     >
-      <div style="text-align: center;">
-        <video 
-          v-if="previewType === 2" 
-          :src="previewUrl" 
-          controls 
+      <div style="text-align: center">
+        <video
+          v-if="previewType === 2"
+          :src="previewUrl"
+          controls
           autoplay
-          style="max-width: 100%; max-height: 500px;"
+          style="max-width: 100%; max-height: 500px"
         ></video>
-        <audio 
-          v-if="previewType === 3" 
-          :src="previewUrl" 
-          controls 
+        <audio
+          v-if="previewType === 3"
+          :src="previewUrl"
+          controls
           autoplay
-          style="width: 100%;"
+          style="width: 100%"
         ></audio>
       </div>
     </el-dialog>
-
   </el-card>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { Search, Plus, UploadFilled, VideoPlay, Headset, Picture } from '@element-plus/icons-vue'
+import {
+  Search,
+  Plus,
+  UploadFilled,
+  VideoPlay,
+  Headset,
+  Picture
+} from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { 
-  getMediaPageAPI, 
-  addMediaAPI, 
-  updateMediaAPI, 
-  deleteMediaAPI 
+import {
+  getMediaPageAPI,
+  addMediaAPI,
+  updateMediaAPI,
+  deleteMediaAPI
 } from '@/api/heritageMedia'
 import { getHeritagePageAPI } from '@/api/heritage'
 import { uploadFileAPI } from '@/api/file'
 import { formatTime } from '@/utils/format'
-
 
 // 状态定义
 const loading = ref(false)
@@ -438,13 +463,13 @@ const getMediaTypeName = (type) => {
 
 const getHeritageTitle = (id) => {
   if (!id) return '-'
-  const found = heritageOptions.value.find(item => item.id === id)
+  const found = heritageOptions.value.find((item) => item.id === id)
   return found ? found.title : id
 }
 
 const getHeritageCover = (id) => {
   if (!id) return ''
-  const found = heritageOptions.value.find(item => item.id === id)
+  const found = heritageOptions.value.find((item) => item.id === id)
   return found ? found.coverImage : ''
 }
 
@@ -591,10 +616,12 @@ const handleUpload = async (options) => {
   const { file } = options
   isUploading.value = true
   uploadProgress.value = 0
-  
+
   try {
     const res = await uploadFileAPI([file], (progressEvent) => {
-      const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+      const percentCompleted = Math.round(
+        (progressEvent.loaded * 100) / progressEvent.total
+      )
       uploadProgress.value = percentCompleted
     })
     if (res.code === '0' || res.code === 200) {
@@ -607,11 +634,11 @@ const handleUpload = async (options) => {
     console.error('上传出错', error)
     // 优先显示后端返回的具体错误信息
     if (error.response && error.response.data && error.response.data.message) {
-       ElMessage.error(error.response.data.message)
+      ElMessage.error(error.response.data.message)
     } else if (error.message && error.message.includes('413')) {
-       ElMessage.error('文件大小超过服务器限制')
+      ElMessage.error('文件大小超过服务器限制')
     } else {
-       ElMessage.error('上传出错，请稍后重试')
+      ElMessage.error('上传出错，请稍后重试')
     }
   } finally {
     isUploading.value = false
@@ -636,10 +663,12 @@ const handleCoverUpload = async (options) => {
   const { file } = options
   isCoverUploading.value = true
   coverUploadProgress.value = 0
-  
+
   try {
     const res = await uploadFileAPI([file], (progressEvent) => {
-      const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+      const percentCompleted = Math.round(
+        (progressEvent.loaded * 100) / progressEvent.total
+      )
       coverUploadProgress.value = percentCompleted
     })
     if (res.code === '0' || res.code === 200) {
@@ -651,9 +680,9 @@ const handleCoverUpload = async (options) => {
   } catch (error) {
     console.error('上传出错', error)
     if (error.response && error.response.data && error.response.data.message) {
-       ElMessage.error(error.response.data.message)
+      ElMessage.error(error.response.data.message)
     } else {
-       ElMessage.error('上传出错，请稍后重试')
+      ElMessage.error('上传出错，请稍后重试')
     }
   } finally {
     isCoverUploading.value = false
@@ -787,7 +816,7 @@ onMounted(() => {
   left: 2px;
   font-size: 14px;
   z-index: 2;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .media-duration {
@@ -796,7 +825,7 @@ onMounted(() => {
   right: 4px;
   color: #fff;
   font-size: 10px;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0, 0, 0, 0.5);
   padding: 0 4px;
   border-radius: 4px;
   z-index: 2;
@@ -808,7 +837,7 @@ onMounted(() => {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0,0,0,0.3);
+  background: rgba(0, 0, 0, 0.3);
   display: flex;
   justify-content: center;
   align-items: center;

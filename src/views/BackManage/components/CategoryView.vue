@@ -23,7 +23,12 @@
       @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="55" />
-      <el-table-column type="index" :index="indexMethod" label="序号" width="80" />
+      <el-table-column
+        type="index"
+        :index="indexMethod"
+        label="序号"
+        width="80"
+      />
       <el-table-column prop="name" label="名称" width="200" />
       <el-table-column prop="description" label="介绍" />
       <!-- 后端无状态字段，已移除 -->
@@ -135,7 +140,12 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="categoryDialogVisible = false">取消</el-button>
-          <el-button type="primary" :loading="submitLoading" @click="submitCategoryForm">确定</el-button>
+          <el-button
+            type="primary"
+            :loading="submitLoading"
+            @click="submitCategoryForm"
+            >确定</el-button
+          >
         </span>
       </template>
     </el-dialog>
@@ -148,7 +158,10 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="deleteDialogVisible = false">取消</el-button>
-          <el-button type="danger" :loading="deleteLoading" @click="confirmDeleteCategory"
+          <el-button
+            type="danger"
+            :loading="deleteLoading"
+            @click="confirmDeleteCategory"
             >确定删除</el-button
           >
         </span>
@@ -168,7 +181,10 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="batchDeleteDialogVisible = false">取消</el-button>
-          <el-button type="danger" :loading="deleteLoading" @click="confirmBatchDelete"
+          <el-button
+            type="danger"
+            :loading="deleteLoading"
+            @click="confirmBatchDelete"
             >确定删除</el-button
           >
         </span>
@@ -181,7 +197,12 @@
 import { ref, reactive, onMounted } from 'vue'
 import { Plus, Delete, Picture } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { pageCategory, addCategory, updateCategory, deleteCategory } from '@/api/category'
+import {
+  pageCategory,
+  addCategory,
+  updateCategory,
+  deleteCategory
+} from '@/api/category'
 import { uploadFileAPI } from '@/api/file'
 import { formatTime } from '@/utils/format'
 
@@ -263,7 +284,9 @@ const fetchCategoryList = async () => {
       if (res.records) {
         const records = res.records
         if (records && records.length > 0) {
-          records.sort((a, b) => new Date(a.createTime) - new Date(b.createTime))
+          records.sort(
+            (a, b) => new Date(a.createTime) - new Date(b.createTime)
+          )
         }
         categoryList.value = records
         totalCategories.value = parseInt(res.total)
@@ -302,13 +325,20 @@ const confirmBatchDelete = async () => {
   deleteLoading.value = true
   try {
     // 后端未提供批量接口，循环调用单删
-    const deletePromises = selectedCategories.value.map(item => deleteCategory(item.id))
+    const deletePromises = selectedCategories.value.map((item) =>
+      deleteCategory(item.id)
+    )
     await Promise.all(deletePromises)
-    
-    ElMessage.success(`已成功删除 ${selectedCategories.value.length} 个项目类别`)
+
+    ElMessage.success(
+      `已成功删除 ${selectedCategories.value.length} 个项目类别`
+    )
     batchDeleteDialogVisible.value = false
     // 删除后刷新列表
-    if (categoryList.value.length === selectedCategories.value.length && currentPage.value > 1) {
+    if (
+      categoryList.value.length === selectedCategories.value.length &&
+      currentPage.value > 1
+    ) {
       currentPage.value--
     }
     fetchCategoryList()
@@ -386,9 +416,9 @@ const confirmDeleteCategory = async () => {
       }
       fetchCategoryList()
     } else {
-       ElMessage.success('删除成功') // 兼容
-       deleteDialogVisible.value = false
-       fetchCategoryList()
+      ElMessage.success('删除成功') // 兼容
+      deleteDialogVisible.value = false
+      fetchCategoryList()
     }
   } catch (error) {
     console.error('删除失败', error)

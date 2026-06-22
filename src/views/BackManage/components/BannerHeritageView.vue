@@ -4,7 +4,6 @@
       <div class="card-header">
         <span>轮播图管理</span>
         <div class="header-actions">
-
           <el-button type="primary" @click="showAddCarouselDialog">
             <el-icon><Plus /></el-icon>新增
           </el-button>
@@ -14,7 +13,12 @@
 
     <!-- 轮播图列表 -->
     <el-table :data="carouselList" stripe style="width: 100%">
-      <el-table-column type="index" :index="indexMethod" label="序号" width="80" />
+      <el-table-column
+        type="index"
+        :index="indexMethod"
+        label="序号"
+        width="80"
+      />
       <el-table-column label="图片" width="120">
         <template #default="scope">
           <el-image
@@ -131,9 +135,7 @@
 
     <!-- 删除确认对话框 -->
     <el-dialog v-model="deleteDialogVisible" title="删除确认" width="400px">
-      <p>
-        确定要删除此轮播图吗？此操作不可撤销。
-      </p>
+      <p>确定要删除此轮播图吗？此操作不可撤销。</p>
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="deleteDialogVisible = false">取消</el-button>
@@ -209,7 +211,7 @@ const fetchCarouselList = async () => {
       size: pageSize.value,
       type: 'HERITAGE'
     })
-    
+
     carouselList.value = data.records || []
     totalCarousels.value = data.total || 0
   } catch (error) {
@@ -311,7 +313,9 @@ const submitCarouselForm = () => {
     if (valid) {
       try {
         await saveBannerAPI(carouselForm, 'HERITAGE')
-        ElMessage.success(carouselFormMode.value === 'add' ? '添加成功' : '更新成功')
+        ElMessage.success(
+          carouselFormMode.value === 'add' ? '添加成功' : '更新成功'
+        )
         carouselDialogVisible.value = false
         fetchCarouselList()
       } catch (error) {

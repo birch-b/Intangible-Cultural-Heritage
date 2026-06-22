@@ -18,16 +18,16 @@ const goToDetail = (item) => {
 const getImageUrl = (item) => {
   // 1. 优先使用 coverUrl (主要用于 HeritageMediaRespDTO，如视频/音频/图片的封面)
   if (item.coverUrl) return item.coverUrl
-  
+
   // 2. 其次使用 coverImage (主要用于 HeritageItemDO，非遗项目封面)
   if (item.coverImage) return item.coverImage
-  
+
   // 3. 如果是图片类型的媒体资源 (mediaType === 1)，且没有封面，可以直接用 url
   if (item.mediaType === 1 && item.url) return item.url
-  
+
   // 4. 如果以上都没有，但有 url 且看起来像图片 (简单判断)，也可以尝试
   // (但为了避免视频链接显示为裂图，这里最好谨慎)
-  
+
   return ''
 }
 </script>
@@ -39,7 +39,10 @@ const getImageUrl = (item) => {
       <div class="text">
         <h3>{{ item.title }}</h3>
         <p>{{ item.description }}</p>
-        <a style="font-size: 1.2vh; cursor: pointer; color: #0062ff;" @click="goToDetail(item)">
+        <a
+          style="font-size: 1.2vh; cursor: pointer; color: #0062ff"
+          @click="goToDetail(item)"
+        >
           <el-icon>
             <Grid />
           </el-icon>
@@ -69,7 +72,9 @@ const getImageUrl = (item) => {
     flex-direction: column;
     justify-content: space-between;
     padding-bottom: 2vh;
-    transition: transform 0.3s, box-shadow 0.3s;
+    transition:
+      transform 0.3s,
+      box-shadow 0.3s;
 
     &:hover {
       transform: translateY(-5px);

@@ -5,10 +5,10 @@
         <span>活动资讯管理</span>
         <div class="header-actions">
           <!-- 搜索区域 -->
-          <el-select 
-            v-model="queryParams.type" 
-            placeholder="全部分类" 
-            clearable 
+          <el-select
+            v-model="queryParams.type"
+            placeholder="全部分类"
+            clearable
             class="search-select"
             @change="searchNews"
           >
@@ -39,8 +39,18 @@
 
     <!-- 资讯列表 -->
     <el-table :data="newsList" stripe style="width: 100%" v-loading="loading">
-      <el-table-column type="index" :index="indexMethod" label="序号" width="80" />
-      <el-table-column prop="title" label="标题" min-width="180" show-overflow-tooltip />
+      <el-table-column
+        type="index"
+        :index="indexMethod"
+        label="序号"
+        width="80"
+      />
+      <el-table-column
+        prop="title"
+        label="标题"
+        min-width="180"
+        show-overflow-tooltip
+      />
       <el-table-column label="分类" width="100">
         <template #default="scope">
           <el-tag effect="plain">{{ getTypeName(scope.row.type) }}</el-tag>
@@ -58,7 +68,12 @@
         </template>
       </el-table-column>
       <el-table-column prop="publisher" label="发布人" width="100" />
-      <el-table-column prop="createTime" label="创建时间" width="160" :formatter="formatDateTime" />
+      <el-table-column
+        prop="createTime"
+        label="创建时间"
+        width="160"
+        :formatter="formatDateTime"
+      />
       <el-table-column prop="status" label="状态" width="80">
         <template #default="scope">
           <el-tag :type="scope.row.status === 1 ? 'success' : 'info'">
@@ -68,10 +83,18 @@
       </el-table-column>
       <el-table-column label="操作" width="180" fixed="right">
         <template #default="scope">
-          <el-button size="small" type="primary" @click="handleEditNews(scope.row)">
+          <el-button
+            size="small"
+            type="primary"
+            @click="handleEditNews(scope.row)"
+          >
             编辑
           </el-button>
-          <el-button size="small" type="danger" @click="handleDeleteNews(scope.row)">
+          <el-button
+            size="small"
+            type="danger"
+            @click="handleDeleteNews(scope.row)"
+          >
             删除
           </el-button>
         </template>
@@ -113,7 +136,11 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="活动分类" prop="type">
-              <el-select v-model="formData.type" placeholder="请选择分类" style="width: 100%">
+              <el-select
+                v-model="formData.type"
+                placeholder="请选择分类"
+                style="width: 100%"
+              >
                 <el-option
                   v-for="item in ACTIVITY_TYPES"
                   :key="item.value"
@@ -128,7 +155,10 @@
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="发布人" prop="publisher">
-              <el-input v-model="formData.publisher" placeholder="请输入发布人/单位" />
+              <el-input
+                v-model="formData.publisher"
+                placeholder="请输入发布人/单位"
+              />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -168,7 +198,11 @@
               :before-upload="beforeAvatarUpload"
               drag
             >
-              <img v-if="formData.coverImage" :src="formData.coverImage" class="avatar" />
+              <img
+                v-if="formData.coverImage"
+                :src="formData.coverImage"
+                class="avatar"
+              />
               <div v-else class="avatar-uploader-icon">
                 <el-icon><Plus /></el-icon>
                 <div class="upload-text">拖拽/点击</div>
@@ -182,29 +216,29 @@
         </el-form-item>
 
         <el-form-item label="活动摘要" prop="description">
-          <el-input 
-            v-model="formData.description" 
-            type="textarea" 
+          <el-input
+            v-model="formData.description"
+            type="textarea"
             :rows="2"
-            placeholder="简短描述，用于列表展示" 
+            placeholder="简短描述，用于列表展示"
           />
         </el-form-item>
 
         <el-form-item label="活动详情" prop="content">
-          <el-input 
-            v-model="formData.content" 
-            type="textarea" 
+          <el-input
+            v-model="formData.content"
+            type="textarea"
             :rows="5"
-            placeholder="支持HTML富文本内容" 
+            placeholder="支持HTML富文本内容"
           />
         </el-form-item>
 
         <!-- 核心：图集编辑区域 -->
         <el-divider content-position="left">精彩瞬间 (图集)</el-divider>
         <div class="gallery-container">
-          <div 
-            v-for="(img, index) in formData.imageList" 
-            :key="index" 
+          <div
+            v-for="(img, index) in formData.imageList"
+            :key="index"
             class="gallery-item"
           >
             <div class="gallery-item-inner">
@@ -216,17 +250,21 @@
                 :before-upload="beforeAvatarUpload"
                 drag
               >
-                <img v-if="img.imageUrl" :src="img.imageUrl" class="gallery-img-preview" />
+                <img
+                  v-if="img.imageUrl"
+                  :src="img.imageUrl"
+                  class="gallery-img-preview"
+                />
                 <div v-else class="gallery-uploader-placeholder">
                   <el-icon><Plus /></el-icon>
                   <span>拖拽/点击</span>
                 </div>
               </el-upload>
-              
+
               <div class="gallery-info">
-                <el-input 
-                  v-model="img.caption" 
-                  placeholder="请输入图片说明..." 
+                <el-input
+                  v-model="img.caption"
+                  placeholder="请输入图片说明..."
                   size="small"
                   class="caption-input"
                 >
@@ -234,27 +272,26 @@
                 </el-input>
               </div>
 
-              <el-button 
-                type="danger" 
+              <el-button
+                type="danger"
                 icon="Delete"
                 circle
-                size="small" 
+                size="small"
                 class="delete-btn"
                 @click="removeGalleryItem(index)"
               />
             </div>
           </div>
-          
-          <el-button 
-            type="primary" 
-            plain 
-            style="width: 100%; margin-top: 10px" 
+
+          <el-button
+            type="primary"
+            plain
+            style="width: 100%; margin-top: 10px"
             @click="addGalleryItem"
           >
             + 添加一张图片
           </el-button>
         </div>
-
       </el-form>
       <template #footer>
         <span class="dialog-footer">
@@ -272,12 +309,12 @@
 import { ref, reactive, onMounted } from 'vue'
 import { Search, Plus } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { 
-  pageActivity, 
-  getActivityDetail, 
-  createActivity, 
-  updateActivity, 
-  deleteActivity 
+import {
+  pageActivity,
+  getActivityDetail,
+  createActivity,
+  updateActivity,
+  deleteActivity
 } from '@/api/heritageActivity'
 import { uploadFileAPI } from '@/api/file'
 import dayjs from 'dayjs'
@@ -293,7 +330,7 @@ const ACTIVITY_TYPES = [
 ]
 
 const getTypeName = (val) => {
-  const type = ACTIVITY_TYPES.find(t => t.value === val)
+  const type = ACTIVITY_TYPES.find((t) => t.value === val)
   return type ? type.label : '未知'
 }
 
@@ -376,7 +413,7 @@ const handleEditNews = async (row) => {
   resetForm()
   // 先从列表填充基础数据，防止详情接口慢导致空白
   Object.assign(formData, row)
-  
+
   // 回显日期范围
   if (formData.activityTime) {
     // 尝试解析常见分隔符
@@ -451,7 +488,11 @@ const removeGalleryItem = (index) => {
 
 // 上传前校验
 const beforeAvatarUpload = (rawFile) => {
-  if (rawFile.type !== 'image/jpeg' && rawFile.type !== 'image/png' && rawFile.type !== 'image/gif') {
+  if (
+    rawFile.type !== 'image/jpeg' &&
+    rawFile.type !== 'image/png' &&
+    rawFile.type !== 'image/gif'
+  ) {
     ElMessage.error('图片必须是 JPG/PNG/GIF 格式!')
     return false
   } else if (rawFile.size / 1024 / 1024 > 5) {
@@ -515,7 +556,7 @@ const handleGalleryUpload = async (options, index) => {
 // 提交表单
 const submitForm = async () => {
   if (!formRef.value) return
-  
+
   await formRef.value.validate(async (valid) => {
     if (valid) {
       submitting.value = true

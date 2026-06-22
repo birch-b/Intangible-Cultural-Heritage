@@ -88,14 +88,23 @@ onMounted(() => {
   <div class="detail-container" v-loading="loading">
     <div class="breadcrumb-bar">
       <el-breadcrumb :separator-icon="ArrowRight">
-        <el-breadcrumb-item :to="{ path: '/activity' }">活动资讯</el-breadcrumb-item>
-        <el-breadcrumb-item :to="{ path: '/act_category' }">全部活动</el-breadcrumb-item>
+        <el-breadcrumb-item :to="{ path: '/activity' }"
+          >活动资讯</el-breadcrumb-item
+        >
+        <el-breadcrumb-item :to="{ path: '/act_category' }"
+          >全部活动</el-breadcrumb-item
+        >
         <el-breadcrumb-item>活动详情</el-breadcrumb-item>
       </el-breadcrumb>
     </div>
 
     <div v-if="errorMessage" class="status-wrap">
-      <el-alert :title="errorMessage" type="error" show-icon :closable="false" />
+      <el-alert
+        :title="errorMessage"
+        type="error"
+        show-icon
+        :closable="false"
+      />
     </div>
 
     <div v-else-if="!detail" class="status-wrap">
@@ -130,13 +139,21 @@ onMounted(() => {
         <p>{{ detail.description }}</p>
       </div>
 
-      <div class="html-content" v-if="detail.content" v-html="detail.content"></div>
+      <div
+        class="html-content"
+        v-if="detail.content"
+        v-html="detail.content"
+      ></div>
       <el-empty v-else description="暂无正文内容" />
 
       <div class="gallery" v-if="imageList.length > 0">
         <h3>精彩瞬间</h3>
         <div class="gallery-grid">
-          <div class="gallery-item" v-for="(img, index) in imageList" :key="index">
+          <div
+            class="gallery-item"
+            v-for="(img, index) in imageList"
+            :key="index"
+          >
             <el-image
               :src="img.imageUrl"
               fit="cover"

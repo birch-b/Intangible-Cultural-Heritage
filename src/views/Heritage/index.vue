@@ -13,7 +13,9 @@ const banners = ref([])
 const getBanners = async () => {
   try {
     const res = await getBannerListAPI('HERITAGE')
-    banners.value = res.filter(item => item.status === '启用').sort((a, b) => a.sort - b.sort)
+    banners.value = res
+      .filter((item) => item.status === '启用')
+      .sort((a, b) => a.sort - b.sort)
   } catch (error) {
     console.error('获取轮播图失败', error)
   }
@@ -36,17 +38,17 @@ const getExploreItems = async () => {
 // 获取精选非遗
 const getFeaturedItems = async () => {
   try {
-    const res = await getHeritagePageAPI({ 
-      current: 1, 
-      size: 4, 
-      isFeatured: 1, 
-      status: 2 
+    const res = await getHeritagePageAPI({
+      current: 1,
+      size: 4,
+      isFeatured: 1,
+      status: 2
     })
     if (res.code === '0' || res.code === 200 || !res.code) {
       const data = res.data || res
       // 前端二次过滤，确保只显示精选项目（兼容数字1和字符串'1'）
       const records = data.records || []
-      featuredItems.value = records.filter(item => item.isFeatured == 1)
+      featuredItems.value = records.filter((item) => item.isFeatured == 1)
     }
   } catch (error) {
     console.error('获取精选非遗失败', error)

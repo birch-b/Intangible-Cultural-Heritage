@@ -66,7 +66,9 @@ const handlePageChange = (page) => {
 // 当前选中类别的名称
 const currentCategoryName = computed(() => {
   if (!selectValue.value) return '全部活动'
-  const option = selectOptions.value.find(opt => opt.value === selectValue.value)
+  const option = selectOptions.value.find(
+    (opt) => opt.value === selectValue.value
+  )
   return option ? option.label : '全部活动'
 })
 
@@ -95,9 +97,9 @@ onMounted(() => {
     </div>
     <!-- 选择框及标题 -->
     <div class="select-title">
-      <el-select 
-        v-model="selectValue" 
-        placeholder="请选择分类" 
+      <el-select
+        v-model="selectValue"
+        placeholder="请选择分类"
         size="large"
         clearable
         @change="handleFilterChange"
@@ -113,16 +115,31 @@ onMounted(() => {
     </div>
     <!-- 主体表格 -->
     <div class="table">
-      <el-table 
-        :data="tableData" 
-        stripe 
-        style="width: 100%" 
+      <el-table
+        :data="tableData"
+        stripe
+        style="width: 100%"
         v-loading="loading"
         @row-click="goToDetail"
       >
-        <el-table-column prop="title" label="活动名称" width="180" show-overflow-tooltip />
-        <el-table-column prop="activityTime" label="活动时间" width="200" show-overflow-tooltip />
-        <el-table-column prop="location" label="活动地点" width="150" show-overflow-tooltip />
+        <el-table-column
+          prop="title"
+          label="活动名称"
+          width="180"
+          show-overflow-tooltip
+        />
+        <el-table-column
+          prop="activityTime"
+          label="活动时间"
+          width="200"
+          show-overflow-tooltip
+        />
+        <el-table-column
+          prop="location"
+          label="活动地点"
+          width="150"
+          show-overflow-tooltip
+        />
         <el-table-column
           prop="description"
           label="活动摘要"
@@ -130,10 +147,10 @@ onMounted(() => {
         />
         <el-table-column label="封面图" width="170">
           <template #default="scope">
-            <el-image 
+            <el-image
               v-if="scope.row.coverImage"
-              style="width: 100px; height: 60px" 
-              :src="scope.row.coverImage" 
+              style="width: 100px; height: 60px"
+              :src="scope.row.coverImage"
               fit="cover"
               preview-teleported
               :preview-src-list="[scope.row.coverImage]"
@@ -143,17 +160,19 @@ onMounted(() => {
         </el-table-column>
         <el-table-column width="80" label="操作">
           <template #default="scope">
-            <el-button link type="primary" @click.stop="goToDetail(scope.row)">查看</el-button>
+            <el-button link type="primary" @click.stop="goToDetail(scope.row)"
+              >查看</el-button
+            >
           </template>
         </el-table-column>
       </el-table>
     </div>
     <!-- 分页 -->
     <div class="pagination">
-      <el-pagination 
-        background 
-        layout="prev, pager, next" 
-        :total="total" 
+      <el-pagination
+        background
+        layout="prev, pager, next"
+        :total="total"
         :current-page="pageParams.current"
         :page-size="pageParams.size"
         @current-change="handlePageChange"

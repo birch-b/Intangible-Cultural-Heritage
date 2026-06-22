@@ -25,9 +25,10 @@ const pageParams = ref({
 const getCategoryList = async () => {
   try {
     const res = await getCategoryListAPI()
-    if (res.code === '0' || res.code === 200 || !res.code) { // 兼容不同返回结构
+    if (res.code === '0' || res.code === 200 || !res.code) {
+      // 兼容不同返回结构
       const data = res.data || res
-      selectOptions.value = data.map(item => ({
+      selectOptions.value = data.map((item) => ({
         value: item.id,
         label: item.name
       }))
@@ -81,7 +82,9 @@ const formatDate = (row) => {
 // 当前选中类别的名称
 const currentCategoryName = computed(() => {
   if (!selectValue.value) return '全部项目'
-  const option = selectOptions.value.find(opt => opt.value === selectValue.value)
+  const option = selectOptions.value.find(
+    (opt) => opt.value === selectValue.value
+  )
   return option ? option.label : '全部项目'
 })
 
@@ -111,9 +114,9 @@ onMounted(() => {
     </div>
     <!-- 选择框及标题 -->
     <div class="select-title">
-      <el-select 
-        v-model="selectValue" 
-        placeholder="请选择分类" 
+      <el-select
+        v-model="selectValue"
+        placeholder="请选择分类"
         size="large"
         clearable
         @change="handleFilterChange"
@@ -129,10 +132,10 @@ onMounted(() => {
     </div>
     <!-- 主体表格 -->
     <div class="table">
-      <el-table 
-        :data="tableData" 
-        stripe 
-        style="width: 100%" 
+      <el-table
+        :data="tableData"
+        stripe
+        style="width: 100%"
         v-loading="loading"
         @row-click="goToDetail"
       >
@@ -149,10 +152,10 @@ onMounted(() => {
         />
         <el-table-column label="项目照片" width="170">
           <template #default="scope">
-            <el-image 
+            <el-image
               v-if="scope.row.coverImage"
-              style="width: 100px; height: 60px" 
-              :src="scope.row.coverImage" 
+              style="width: 100px; height: 60px"
+              :src="scope.row.coverImage"
               fit="cover"
               preview-teleported
               :preview-src-list="[scope.row.coverImage]"
@@ -164,10 +167,10 @@ onMounted(() => {
     </div>
     <!-- 分页 -->
     <div class="pagination">
-      <el-pagination 
-        background 
-        layout="prev, pager, next" 
-        :total="total" 
+      <el-pagination
+        background
+        layout="prev, pager, next"
+        :total="total"
         :current-page="pageParams.current"
         :page-size="pageParams.size"
         @current-change="handlePageChange"

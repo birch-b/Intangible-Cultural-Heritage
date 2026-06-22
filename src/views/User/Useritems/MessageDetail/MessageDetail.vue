@@ -39,14 +39,17 @@ onMounted(() => {
             </div>
           </div>
           <div class="content">
-            <el-scrollbar max-height="65vh" style="padding-top: 2vh">{{ content }}</el-scrollbar>
+            <el-scrollbar max-height="65vh" style="padding-top: 2vh">{{
+              content
+            }}</el-scrollbar>
           </div>
           <div class="footer">
             <el-button text type="primary" @click="goBackToNotice">
               返回消息通知
             </el-button>
             <div class="delete">
-              <i class="iconfont icon-shanchu" style="margin-right: 0.5vw"></i>删除
+              <i class="iconfont icon-shanchu" style="margin-right: 0.5vw"></i
+              >删除
             </div>
           </div>
         </div>

@@ -61,7 +61,12 @@ onMounted(() => {
       <el-skeleton :rows="6" animated />
     </div>
     <div v-else-if="errorMessage" class="status-wrap">
-      <el-alert :title="errorMessage" type="error" show-icon :closable="false" />
+      <el-alert
+        :title="errorMessage"
+        type="error"
+        show-icon
+        :closable="false"
+      />
     </div>
     <template v-else>
       <div class="explore">

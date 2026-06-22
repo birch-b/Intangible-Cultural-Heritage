@@ -131,10 +131,36 @@
               :disabled="userInfo.role !== '超级管理员'"
             />
             <el-option label="普通管理员" value="普通管理员" />
+            <el-option label="普通用户" value="普通用户" />
           </el-select>
         </el-form-item>
         <el-form-item label="电话" prop="phone">
           <el-input v-model="adminForm.phone" />
+        </el-form-item>
+        <el-form-item
+          label="邮箱"
+          prop="mail"
+          v-if="adminFormMode === 'add'"
+        >
+          <el-input v-model="adminForm.mail" />
+        </el-form-item>
+        <el-form-item
+          label="邮箱验证码"
+          prop="emailCode"
+          v-if="adminFormMode === 'add'"
+        >
+          <div style="display: flex; gap: 10px">
+            <el-input
+              style="flex: 1"
+              v-model="adminForm.emailCode"
+              placeholder="请输入验证码"
+            />
+            <el-button
+              @click="getAdminEmailCode"
+              :disabled="adminCodeDisabled"
+              >{{ adminCodeCount === 0 ? '获取验证码' : adminCodeCount + 's' }}</el-button
+            >
+          </div>
         </el-form-item>
         <el-form-item
           label="密码"
@@ -195,7 +221,8 @@ import {
   pageUserAPI,
   createAdminAPI,
   updateAdminAPI,
-  deleteUserAPI
+  deleteUserAPI,
+  getCodeAPI
 } from '@/api/user'
 
 // 接收userInfo作为props
@@ -226,6 +253,8 @@ const adminForm = reactive({
   username: '',
   role: '普通管理员',
   phone: '',
+  mail: '',
+  emailCode: '',
   password: '',
   confirmPassword: ''
 })
@@ -233,6 +262,41 @@ const adminForm = reactive({
 // 删除对话框相关
 const deleteDialogVisible = ref(false)
 const adminToDelete = ref(null)
+
+// 邮箱验证码相关
+const adminCodeCount = ref(0)
+const adminCodeDisabled = ref(false)
+
+// 获取管理员添加用户时的邮箱验证码
+const getAdminEmailCode = async () => {
+  if (!adminForm.mail) {
+    ElMessage.warning('请先输入邮箱')
+    return
+  }
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+  if (!emailRegex.test(adminForm.mail)) {
+    ElMessage.warning('请输入有效的邮箱地址')
+    return
+  }
+  if (adminCodeDisabled.value) return
+  adminCodeDisabled.value = true
+  try {
+    await getCodeAPI(adminForm.mail)
+    ElMessage.success('验证码已发送至您的邮箱')
+    adminCodeCount.value = 60
+    let timer = setInterval(() => {
+      adminCodeCount.value--
+      if (adminCodeCount.value === 0) {
+        clearInterval(timer)
+        adminCodeDisabled.value = false
+      }
+    }, 1000)
+  } catch (error) {
+    console.error('获取验证码失败', error)
+    ElMessage.error('获取验证码失败，请稍后重试')
+    adminCodeDisabled.value = false
+  }
+}
 
 // 计算表格序号
 const indexMethod = (index) => {
@@ -274,6 +338,15 @@ const adminRules = {
       trigger: 'blur'
     }
   ],
+  mail: [
+    { required: true, message: '请输入邮箱', trigger: 'blur' },
+    {
+      pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+      message: '请输入有效的邮箱地址',
+      trigger: 'blur'
+    }
+  ],
+  emailCode: [{ required: true, message: '请输入邮箱验证码', trigger: 'blur' }],
   password: [{ validator: validatePass, trigger: 'blur' }],
   confirmPassword: [{ validator: validatePass2, trigger: 'blur' }]
 }
@@ -370,8 +443,12 @@ const resetAdminForm = () => {
   adminForm.username = ''
   adminForm.role = '普通管理员'
   adminForm.phone = ''
+  adminForm.mail = ''
+  adminForm.emailCode = ''
   adminForm.password = ''
   adminForm.confirmPassword = ''
+  adminCodeCount.value = 0
+  adminCodeDisabled.value = false
   nextTick(() => {
     adminFormRef.value?.resetFields()
   })
@@ -388,7 +465,9 @@ const submitAdminForm = () => {
             username: adminForm.username,
             password: adminForm.password,
             phone: adminForm.phone,
-            role: adminForm.role === '超级管理员' ? 2 : 1
+            mail: adminForm.mail,
+            emailCode: adminForm.emailCode,
+            role: adminForm.role === '超级管理员' ? 2 : adminForm.role === '普通管理员' ? 1 : 0
           }
           const res = await createAdminAPI(reqData)
           if (res.code === '0') {
@@ -401,7 +480,7 @@ const submitAdminForm = () => {
           const reqData = {
             username: adminForm.username,
             phone: adminForm.phone,
-            role: adminForm.role === '超级管理员' ? 2 : 1
+            role: adminForm.role === '超级管理员' ? 2 : adminForm.role === '普通管理员' ? 1 : 0
           }
           if (adminForm.password) {
             reqData.password = adminForm.password

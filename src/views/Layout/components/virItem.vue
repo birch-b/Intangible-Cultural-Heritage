@@ -23,7 +23,9 @@
   flex-wrap: wrap;
   justify-content: space-between;
   background-color: #ffffff;
-  transition: transform 0.3s, box-shadow 0.3s;
+  transition:
+    transform 0.3s,
+    box-shadow 0.3s;
 
   &:hover {
     transform: translateY(-5px);

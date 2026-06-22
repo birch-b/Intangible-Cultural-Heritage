@@ -11,7 +11,12 @@
 
     <!-- 分类列表 (纯展示) -->
     <el-table :data="categoryList" stripe style="width: 100%">
-      <el-table-column type="index" :index="indexMethod" label="序号" width="80" />
+      <el-table-column
+        type="index"
+        :index="indexMethod"
+        label="序号"
+        width="80"
+      />
       <el-table-column prop="name" label="分类名称" width="180">
         <template #default="scope">
           <el-tag>{{ scope.row.name }}</el-tag>
@@ -35,7 +40,8 @@ const categoryList = ref([
   {
     id: 1,
     name: '展示推广',
-    description: '以展示非遗项目和成果为主的公开活动，重在视觉传播、项目亮相与作品展览。'
+    description:
+      '以展示非遗项目和成果为主的公开活动，重在视觉传播、项目亮相与作品展览。'
   },
   {
     id: 2,
@@ -45,12 +51,14 @@ const categoryList = ref([
   {
     id: 3,
     name: '交流融合',
-    description: '强调交流合作、文化互访、跨领域融合等活动，促进非遗交流、创新与联动。'
+    description:
+      '强调交流合作、文化互访、跨领域融合等活动，促进非遗交流、创新与联动。'
   },
   {
     id: 4,
     name: '教育体验',
-    description: '以教育普及、体验活动、青年培养为重点，促进非遗知识传播与参与。'
+    description:
+      '以教育普及、体验活动、青年培养为重点，促进非遗知识传播与参与。'
   },
   {
     id: 5,
