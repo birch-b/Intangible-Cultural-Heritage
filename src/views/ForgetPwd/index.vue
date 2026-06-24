@@ -2,7 +2,7 @@
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { getCodeAPI, verifyCodeAPI, resetPasswordAPI } from '@/api/user'
+import { getCodeAPI, resetPasswordAPI } from '@/api/user'
 const router = useRouter()
 
 const form = reactive({
@@ -75,13 +75,7 @@ const sign = ref(0)
 
 const change = async () => {
   if (sign.value === 0) {
-    try {
-      await verifyCodeAPI(form.phone, form.yzm)
-      ElMessage.success('验证码校验通过')
-      sign.value++
-    } catch {
-      ElMessage.error('验证码错误，请重试')
-    }
+    sign.value++
   } else if (sign.value === 1) {
     if (form1.password !== form1.password1) {
       ElMessage.error('两次输入的密码不一致')
@@ -90,12 +84,13 @@ const change = async () => {
     try {
       await resetPasswordAPI({
         email: form.phone,
+        code: form.yzm,
         newPassword: form1.password
       })
       ElMessage.success('密码修改成功')
       sign.value++
     } catch {
-      ElMessage.error('修改密码失败，请重试')
+      ElMessage.error('修改密码失败，请检查验证码是否正确')
     }
   } else {
     router.push('/login')
@@ -104,6 +99,12 @@ const change = async () => {
 
 const goBack = () => {
   router.push('/login')
+}
+
+const prevStep = () => {
+  if (sign.value > 0) {
+    sign.value--
+  }
 }
 </script>
 
@@ -199,9 +200,14 @@ const goBack = () => {
         <div class="complete" v-show="sign === 2">
           <h1>修改密码成功!</h1>
         </div>
-        <el-button color="rgb(170, 62, 62)" plain @click="change">{{
-          sign !== 2 ? '下一步' : '返回登录页面'
-        }}</el-button>
+        <div class="btn-group">
+          <el-button v-if="sign === 1" plain @click="prevStep"
+            >上一步</el-button
+          >
+          <el-button color="rgb(170, 62, 62)" plain @click="change">{{
+            sign !== 2 ? '下一步' : '返回登录页面'
+          }}</el-button>
+        </div>
       </div>
     </div>
     <div class="bottom"></div>
@@ -278,8 +284,15 @@ const goBack = () => {
         }
       }
 
-      .el-button {
-        width: 52%;
+      .btn-group {
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+
+        .el-button {
+          width: auto;
+          min-width: 120px;
+        }
       }
 
       .complete {

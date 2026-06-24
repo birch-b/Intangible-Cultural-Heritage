@@ -9,19 +9,10 @@ export const getCodeAPI = (email) => {
   })
 }
 
-// 校验邮箱验证码
-export const verifyCodeAPI = (email, code) => {
-  return request({
-    url: '/admin/v1/user/email-code/verify',
-    method: 'post',
-    data: { email, code }
-  })
-}
-
-// 修改密码
+// 校验邮箱验证码并重置密码
 export const resetPasswordAPI = (data) => {
   return request({
-    url: '/admin/v1/user/reset-password',
+    url: '/admin/v1/user/email-code/verify',
     method: 'post',
     data
   })

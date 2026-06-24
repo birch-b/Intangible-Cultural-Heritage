@@ -1,13 +1,15 @@
 <script setup>
-import { reactive, onMounted, computed, watch } from 'vue'
+import { reactive, onMounted, computed, watch, ref } from 'vue'
 import { useUserStore } from '@/stores/user'
 import { updateUserInfoAPI } from '@/api/user'
 import { uploadFileAPI } from '@/api/file'
+import { getHeritageCollectionPageAPI } from '@/api/heritage'
 import { ElMessage } from 'element-plus'
 import { Camera } from '@element-plus/icons-vue'
 
 const userStore = useUserStore()
 const formRef = reactive(null)
+const collectCount = ref(0)
 
 const formLabelAlign = reactive({
   username: '',
@@ -19,6 +21,17 @@ const formLabelAlign = reactive({
 
 const rules = {
   username: [{ required: true, message: '请输入用户名', trigger: 'blur' }]
+}
+
+const getCollectCount = async () => {
+  try {
+    const res = await getHeritageCollectionPageAPI({ current: 1, size: 1 })
+    if (res.code === '0') {
+      collectCount.value = parseInt(res.data.total) || 0
+    }
+  } catch {
+    collectCount.value = 0
+  }
 }
 
 // 初始化表单数据
@@ -71,23 +84,19 @@ const uploadAvatar = async ({ file }) => {
   try {
     const res = await uploadFileAPI([file])
     if (res.code === '0' && res.data) {
-      // 假设后端返回的是逗号分隔的字符串，这里只取第一个（虽然我们只传了一个）
       const urls = res.data.split(',')
       formLabelAlign.avatar = urls[0]
-      console.log('Avatar uploaded, new URL:', formLabelAlign.avatar)
-      ElMessage.success('头像上传成功，请点击“修改”按钮保存')
+      ElMessage.success('头像上传成功，请点击"修改"按钮保存')
     } else {
       ElMessage.error(res.message || '头像上传失败')
     }
-  } catch (error) {
-    console.error('头像上传异常', error)
+  } catch {
     ElMessage.error('头像上传异常')
   }
 }
 
 const handleSubmit = async () => {
   try {
-    // 确保 username 存在
     const currentUsername =
       formLabelAlign.username || userStore.userInfo?.username
     if (!currentUsername) {
@@ -103,20 +112,17 @@ const handleSubmit = async () => {
       avatar: formLabelAlign.avatar
     }
 
-    console.log('Submitting update data:', updateData)
-
     await updateUserInfoAPI(updateData)
     ElMessage.success('修改成功')
-    // 重新获取用户信息以更新状态
     await userStore.getUserInfo()
-  } catch (error) {
-    console.error('Update failed:', error)
+  } catch {
     ElMessage.error('修改失败')
   }
 }
 
 onMounted(() => {
   initForm()
+  getCollectCount()
 })
 </script>
 
@@ -152,7 +158,7 @@ onMounted(() => {
           </div>
           <div class="collect">
             <p>收藏项目</p>
-            <p>18</p>
+            <p>{{ collectCount }}</p>
           </div>
         </div>
         <div class="form">
