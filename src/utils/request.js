@@ -4,10 +4,12 @@ import { useUserStore } from '@/stores/user'
 import router from '@/router'
 
 const baseURL = import.meta.env.PROD ? '/gric/api' : '/api'
-// 创建axios实例
+
+let isRefreshing = false
+
 const http = axios.create({
   baseURL,
-  timeout: 5000
+  timeout: 10000
 })
 
 // 请求拦截器
@@ -50,10 +52,13 @@ http.interceptors.response.use(
     }
 
     if (err.response && err.response.status === 401) {
-      ElMessage.error('登录过期，请重新登录')
-      const userStore = useUserStore()
-      userStore.logout()
-      router.push('/login')
+      if (!isRefreshing) {
+        isRefreshing = true
+        ElMessage.error('登录过期，请重新登录')
+        const userStore = useUserStore()
+        userStore.logout()
+        router.push('/login')
+      }
     } else {
       ElMessage.error(err.message || '网络异常')
     }

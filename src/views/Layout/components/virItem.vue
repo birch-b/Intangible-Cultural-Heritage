@@ -1,4 +1,11 @@
-<script setup></script>
+<script setup>
+import { useRouter } from 'vue-router'
+const router = useRouter()
+
+const goToMap = () => {
+  router.push('/map')
+}
+</script>
 
 <template>
   <div class="vir_content">
@@ -8,7 +15,7 @@
       <p>
         通过先进的3D技术，足不出户即可360度全方位欣赏广东非物质文化遗产的精髓
       </p>
-      <el-button type="primary">进入虚拟展厅</el-button>
+      <el-button type="primary" @click="goToMap">进入虚拟展厅</el-button>
     </div>
   </div>
 </template>

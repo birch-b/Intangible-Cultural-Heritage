@@ -1,39 +1,51 @@
 <script setup>
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import { getCodeAPI, verifyCodeAPI, resetPasswordAPI } from '@/api/user'
 const router = useRouter()
-// import router from 'vue-router
-// 手机号校验
+
 const form = reactive({
   phone: '',
   yzm: ''
 })
 const rules = reactive({
   phone: [
-    { required: true, message: '请输入手机号', trigger: 'blur' },
-    { pattern: /^1[3-9]\d{9}$/, message: '请输入有效的手机号', trigger: 'blur' }
+    { required: true, message: '请输入邮箱', trigger: 'blur' },
+    {
+      pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+      message: '请输入有效的邮箱',
+      trigger: 'blur'
+    }
   ],
   yzm: [{ required: true, message: '请输入验证码', trigger: 'blur' }]
 })
-// 验证码的应用
+
 const min = ref(0)
 const istrue = ref(false)
-// 获取验证码
-const count = () => {
-  istrue.value = true
-  console.log('获取验证码')
-  min.value = 60
-  let timer = setInterval(() => {
-    min.value--
-    console.log(min.value !== 0)
-    if (min.value === 0) {
-      clearInterval(timer)
-      istrue.value = false
-    }
-  }, 1000)
+
+const count = async () => {
+  if (!form.phone) {
+    ElMessage.warning('请先输入邮箱')
+    return
+  }
+  try {
+    await getCodeAPI(form.phone)
+    ElMessage.success('验证码已发送')
+    istrue.value = true
+    min.value = 60
+    let timer = setInterval(() => {
+      min.value--
+      if (min.value === 0) {
+        clearInterval(timer)
+        istrue.value = false
+      }
+    }, 1000)
+  } catch {
+    ElMessage.error('发送验证码失败，请重试')
+  }
 }
 
-// 重置密码
 const form1 = reactive({
   password: '',
   password1: ''
@@ -60,19 +72,47 @@ const rules1 = reactive({
 })
 
 const sign = ref(0)
-// 点击下一步按钮
-const change = () => {
-  if (sign.value !== 2) {
-    sign.value++
+
+const change = async () => {
+  if (sign.value === 0) {
+    try {
+      await verifyCodeAPI(form.phone, form.yzm)
+      ElMessage.success('验证码校验通过')
+      sign.value++
+    } catch {
+      ElMessage.error('验证码错误，请重试')
+    }
+  } else if (sign.value === 1) {
+    if (form1.password !== form1.password1) {
+      ElMessage.error('两次输入的密码不一致')
+      return
+    }
+    try {
+      await resetPasswordAPI({
+        email: form.phone,
+        newPassword: form1.password
+      })
+      ElMessage.success('密码修改成功')
+      sign.value++
+    } catch {
+      ElMessage.error('修改密码失败，请重试')
+    }
   } else {
     router.push('/login')
   }
+}
+
+const goBack = () => {
+  router.push('/login')
 }
 </script>
 
 <template>
   <div class="forgetPwd">
-    <div class="topic">粤韵非遗文化传承平台</div>
+    <div class="topic">
+      <span>粤韵非遗文化传承平台</span>
+      <el-button text @click="goBack" class="back-btn">返回登录注册</el-button>
+    </div>
     <div class="center">
       <div class="step">
         <el-steps
@@ -96,14 +136,14 @@ const change = () => {
             :rules="rules"
           >
             <el-form-item
-              label="请输入手机号"
+              label="请输入邮箱"
               label-position="right"
               prop="phone"
             >
               <el-input
                 v-model="form.phone"
                 class="input"
-                placeholder="请输入手机号"
+                placeholder="请输入邮箱"
                 style="width: 12vw"
               />
             </el-form-item>
@@ -197,6 +237,14 @@ const change = () => {
     color: white;
     padding: 0vh 7vw;
     background-color: $logintextColor;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .back-btn {
+      color: white;
+      font-size: 16px;
+    }
   }
 
   .center {
@@ -206,14 +254,13 @@ const change = () => {
     background-color: rgb(247, 233, 206);
     height: 82vh;
 
-    // background-color: pink;
     .step {
       margin-top: 15vh;
       width: 30vw;
     }
 
     .content {
-      width: 40vw;
+      width: 30vw;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -222,15 +269,17 @@ const change = () => {
       .form {
         display: flex;
         flex-direction: column;
-        align-items: flex-end;
+        align-items: center;
+        width: 100%;
 
         .el-form-item {
           margin-bottom: 4vh;
+          width: 100%;
         }
       }
 
       .el-button {
-        width: 300px;
+        width: 52%;
       }
 
       .complete {
