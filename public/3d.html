@@ -135,9 +135,22 @@
         font-weight: 500;
       }
 
+      .culture-item-city {
+        font-size: 12px;
+        color: #ffaa88;
+        margin-top: 2px;
+      }
+
       .culture-item-type {
         font-size: 12px;
         color: #88ccff;
+      }
+
+      .empty-tip {
+        text-align: center;
+        color: #667788;
+        padding: 40px 0;
+        font-size: 14px;
       }
 
       .back-home {
@@ -230,57 +243,93 @@
           color: 0x0088cc,
           highlightColor: 0x00a8ff,
           cities: ['广州市', '深圳市', '珠海市', '佛山市', '中山市', '东莞市', '惠州市', '江门市', '肇庆市'],
-          cityDistrictCodes: ['440100', '440300', '440400', '440600', '442000', '441900', '441300', '440700', '441200']
+          cityDistrictCodes: ['440100', '440300', '440400', '440600', '442000', '441900', '441300', '440700', '441200'],
+          cityKeywords: ['广州', '深圳', '珠海', '佛山', '中山', '东莞', '惠州', '江门', '肇庆']
         },
         east: {
           name: '粤东地区',
           color: 0x00cc88,
           highlightColor: 0x00ffaa,
           cities: ['汕头市', '潮州市', '揭阳市', '汕尾市'],
-          cityDistrictCodes: ['440500', '445100', '445200', '441500']
+          cityDistrictCodes: ['440500', '445100', '445200', '441500'],
+          cityKeywords: ['汕头', '潮州', '揭阳', '汕尾']
         },
         west: {
           name: '粤西地区',
           color: 0x8800cc,
           highlightColor: 0xaa00ff,
           cities: ['湛江市', '茂名市', '阳江市'],
-          cityDistrictCodes: ['440800', '440900', '441700']
+          cityDistrictCodes: ['440800', '440900', '441700'],
+          cityKeywords: ['湛江', '茂名', '阳江']
         },
         north: {
           name: '粤北地区',
           color: 0xcc8800,
           highlightColor: 0xff9900,
           cities: ['韶关市', '清远市', '梅州市', '河源市', '云浮市'],
-          cityDistrictCodes: ['440200', '441800', '441400', '441600', '445300']
+          cityDistrictCodes: ['440200', '441800', '441400', '441600', '445300'],
+          cityKeywords: ['韶关', '清远', '梅州', '河源', '云浮']
         }
       }
 
-      const heritageData = {
+      let heritageData = {
+        '珠三角地区': [],
+        '粤东地区': [],
+        '粤西地区': [],
+        '粤北地区': []
+      }
+//模拟数据以防万一接口返回为空
+      const defaultHeritageData = {
         '珠三角地区': [
-          { name: '粤剧', type: '传统戏剧', image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Cantonese%20opera%20performance%20traditional%20costumes&image_size=landscape_4_3', description: '中国四大剧种之一，以粤语演唱' },
-          { name: '岭南画派', type: '传统美术', image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Lingnan%20Chinese%20painting%20mountains%20water&image_size=landscape_4_3', description: '融合中西绘画技法的现代中国画流派' },
-          { name: '广绣', type: '传统技艺', image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Cantonese%20embroidery%20colorful%20patterns&image_size=landscape_4_3', description: '中国四大名绣之一，针法细腻' },
-          { name: '沙湾飘色', type: '民俗活动', image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=traditional%20Chinese%20parade%20colorful%20costumes&image_size=landscape_4_3', description: '极具特色的民间艺术表演' }
+          { name: '粤剧', city: '广州市', type: '传统戏剧', image: '', description: '中国四大剧种之一，以粤语演唱，表演细腻优美' },
+          { name: '东莞千角灯', city: '东莞市', type: '传统美术', image: '', description: '东莞特色传统花灯，工艺精湛' },
+          { name: '中山咸水歌', city: '中山市', type: '传统音乐', image: '', description: '中山水乡特有的民歌形式，韵味悠长' },
         ],
         '粤东地区': [
-          { name: '潮剧', type: '传统戏剧', image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Teochew%20opera%20elegant%20costumes&image_size=landscape_4_3', description: '用潮州话演唱的地方戏曲' },
-          { name: '潮绣', type: '传统技艺', image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Chaozhou%20embroidery%20gold%20thread&image_size=landscape_4_3', description: '以金碧辉煌著称的刺绣艺术' },
-          { name: '英歌舞', type: '民俗舞蹈', image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Yingge%20dance%20traditional%20weapons&image_size=landscape_4_3', description: '阳刚威武的广场舞蹈' },
-          { name: '潮州木雕', type: '传统美术', image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Chaozhou%20wood%20carving%20intricate&image_size=landscape_4_3', description: '精雕细琢的木雕艺术' }
+          { name: '潮剧', city: '潮州市', type: '传统戏剧', image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Chaozhou%20opera%20Teochew%20traditional%20Chinese%20opera%20elegant%20costumes%20and%20singing&image_size=landscape_4_3', description: '用潮州话演唱的地方戏曲，唱腔婉转优美' },
+          { name: '普宁嵌瓷', city: '揭阳市', type: '传统技艺', image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Puning%20porcelain%20mosaic%20art%20colorful%20ceramic%20pieces%20on%20traditional%20buildings&image_size=landscape_4_3', description: '潮汕传统建筑装饰艺术，色彩斑斓' },
+          { name: '潮阳剪纸', city: '汕头市', type: '传统美术', image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Chaoyang%20paper%20cutting%20Chinese%20traditional%20folk%20art%20intricate%20patterns&image_size=landscape_4_3', description: '潮阳特色剪纸艺术，风格独特' },
         ],
         '粤西地区': [
-          { name: '雷剧', type: '传统戏剧', image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Leizhou%20opera%20local%20style&image_size=landscape_4_3', description: '雷州方言戏曲' },
-          { name: '遂溪醒狮', type: '民俗活动', image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Chinese%20lion%20dance%20performance&image_size=landscape_4_3', description: '极具阳刚之美的狮舞' },
-          { name: '木偶戏', type: '传统戏剧', image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Chinese%20puppet%20show&image_size=landscape_4_3', description: '历史悠久的傀儡戏' },
-          { name: '端砚制作', type: '传统技艺', image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Chinese%20ink%20stone%20making&image_size=landscape_4_3', description: '中国四大名砚之首' }
+          { name: '遂溪醒狮', city: '湛江市', type: '民俗活动', image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Suixi%20lion%20dance%20Chinese%20traditional%20lion%20dance%20performance%20dynamic%20energetic&image_size=landscape_4_3', description: '极具阳刚之美的狮舞，气势磅礴' },
+          { name: '湛江人龙舞', city: '湛江市', type: '民俗舞蹈', image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Zhanjiang%20human%20dragon%20dance%20Chinese%20traditional%20folk%20dance%20spectacular%20performance&image_size=landscape_4_3', description: '独特的民俗舞蹈，人搭成人龙，气势恢宏' },
+          { name: '廉江舞鹰雄', city: '湛江市', type: '民俗舞蹈', image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Lianjiang%20eagle%20hawk%20dance%20Chinese%20traditional%20folk%20dance%20dynamic%20performance&image_size=landscape_4_3', description: '廉江独特的民间舞蹈，刚劲有力' }
         ],
         '粤北地区': [
-          { name: '客家山歌', type: '传统音乐', image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Hakka%20folk%20song%20mountain%20village&image_size=landscape_4_3', description: '客家文化的瑰宝' },
-          { name: '围龙屋建筑', type: '传统建筑', image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Hakka%20round%20house%20architecture&image_size=landscape_4_3', description: '独特的客家民居建筑' },
-          { name: '舞火龙', type: '民俗活动', image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=fire%20dragon%20dance%20festival&image_size=landscape_4_3', description: '壮观的民间节庆活动' },
-          { name: '竹编技艺', type: '传统技艺', image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=bamboo%20weaving%20craft&image_size=landscape_4_3', description: '精巧的竹艺编织' }
+          { name: '客家山歌', city: '梅州市', type: '传统音乐', image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Hakka%20folk%20song%20Guangdong%20mountain%20village%20traditional%20Chinese%20music%20rural%20scene&image_size=landscape_4_3', description: '客家文化的瑰宝，歌声悠扬动听' },
+          { name: '瑶族长鼓舞', city: '清远市', type: '传统舞蹈', image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Yao%20ethnic%20long%20drum%20dance%20Chinese%20minority%20traditional%20dance%20colorful%20costumes&image_size=landscape_4_3', description: '瑶族传统舞蹈，舞姿优美动人' },
+          { name: '云浮木雕', city: '云浮市', type: '传统美术', image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Yunfu%20wood%20carving%20Chinese%20traditional%20sculpture%20art%20intricate%20design&image_size=landscape_4_3', description: '云浮传统木雕艺术' }
         ]
       }
+
+      let dataLoaded = false
+
+      function fetchHeritageData() {
+        window.parent.postMessage({ action: 'requestHeritageData' }, '*')
+      }
+
+      function handleHeritageData(event) {
+        if (event.data && event.data.action === 'receiveHeritageData') {
+          dataLoaded = true
+          if (event.data.data) {
+            Object.keys(event.data.data).forEach(region => {
+              heritageData[region] = (event.data.data[region] || []).map(item => ({
+                ...item,
+                image: item.image || ''
+              }))
+            })
+          } else {
+            Object.keys(heritageData).forEach(region => {
+              heritageData[region] = []
+            })
+          }
+          if (window.onDataReady) {
+            window.onDataReady()
+          }
+        }
+      }
+
+      window.addEventListener('message', handleHeritageData)
 
       const ambientLight = new THREE.AmbientLight(0x404050, 0.8)
       scene.add(ambientLight)
@@ -317,7 +366,16 @@
       const mapGroup = new THREE.Group()
       scene.add(mapGroup)
 
-      loadGuangdongMap()
+      function initApp() {
+        fetchHeritageData()
+        loadGuangdongMap()
+      }
+
+      window.onDataReady = function() {
+        console.log('Heritage data loaded')
+      }
+
+      initApp()
 
       async function loadGuangdongMap() {
         try {
@@ -614,15 +672,20 @@
         cultureImage.src = getRegionImage(regionData.name)
 
         const heritages = heritageData[regionData.name] || []
-        cultureList.innerHTML = heritages.map((item) => `
-          <div class="culture-item">
-            <div class="culture-item-icon" style="background-image: url('${item.image}')"></div>
-            <div>
-              <div class="culture-item-name">${item.name}</div>
-              <div class="culture-item-type">${item.type}</div>
+        if (heritages.length === 0) {
+          cultureList.innerHTML = '<div class="empty-tip">暂无非遗项目数据</div>'
+        } else {
+          cultureList.innerHTML = heritages.map((item) => `
+            <div class="culture-item">
+              <div class="culture-item-icon" style="background-image: url('${item.image}')"></div>
+              <div>
+                <div class="culture-item-name">${item.name}</div>
+                <div class="culture-item-city">${item.city || ''}</div>
+                <div class="culture-item-type">${item.type}</div>
+              </div>
             </div>
-          </div>
-        `).join('')
+          `).join('')
+        }
 
         cultureButton.onclick = () => {
           window.parent.postMessage({ action: 'navigateTo', path: '/heritage' }, '*')
@@ -633,22 +696,22 @@
 
       function getCultureDescription(regionName) {
         const descriptions = {
-          '珠三角地区': '珠三角地区是岭南文化的核心区域，汇集了广府文化的精华。这里是非遗文化最集中、最丰富的地区，粤剧、广绣、岭南画派等享誉海内外。',
-          '粤东地区': '粤东地区以潮汕文化为代表，保留了丰富的传统民俗。潮剧、英歌舞、潮绣等文化瑰宝在这里代代相传，展现了独特的地域风情。',
-          '粤西地区': '粤西地区拥有独特的雷州文化和海洋文化。雷剧、醒狮、木偶戏等民间艺术形式独具特色，端砚制作更是闻名天下。',
-          '粤北地区': '粤北地区是客家文化的重要发源地，客家山歌、围龙屋建筑等文化遗产承载着客家人的历史记忆，展现了山区独特的文化风貌。'
+          '珠三角地区': '珠三角地区是岭南文化的核心区域，汇聚了广府文化的精华。这里是非遗文化最集中、最丰富的地区，拥有粤剧、广绣、岭南画派、石湾陶塑技艺等众多国家级非遗项目。广州的陈家祠、佛山的祖庙等地标建筑见证了这片土地的历史底蕴。',
+          '粤东地区': '粤东地区以潮汕文化为代表，保留了丰富的传统民俗。潮剧、英歌舞、潮绣、普宁嵌瓷等文化瑰宝在这里代代相传。潮汕工夫茶、潮州菜等饮食文化更是享誉海内外，展现了独特的地域风情。',
+          '粤西地区': '粤西地区拥有独特的雷州文化和海洋文化。雷剧、醒狮、木偶戏等民间艺术形式独具特色，端砚制作技艺更是闻名天下。湛江的舞狮、茂名的年例等民俗活动丰富多彩，承载着浓厚的地方文化特色。',
+          '粤北地区': '粤北地区是客家文化的重要发源地，客家山歌、围龙屋建筑等文化遗产承载着客家人的历史记忆。韶关的珠玑巷是广府人的发祥地，清远的瑶族歌舞、连南的瑶族长鼓舞等少数民族文化独具魅力。'
         }
         return descriptions[regionName] || '暂无文化介绍。'
       }
 
       function getRegionImage(regionName) {
         const images = {
-          '珠三角地区': 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Pearl%20River%20Delta%20Guangzhou%20cityscape%20modern%20traditional&image_size=landscape_16_9',
-          '粤东地区': 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=eastern%20Guangdong%20Chaozhou%20ancient%20city%20temples&image_size=landscape_16_9',
-          '粤西地区': 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=western%20Guangdong%20coastal%20fishing%20villages&image_size=landscape_16_9',
-          '粤北地区': 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=north%20Guangdong%20mountain%20Hakka%20villages&image_size=landscape_16_9'
+          '珠三角地区': '/image/1.webp',
+          '粤东地区': '/image/2.webp',
+          '粤西地区': '/image/3.webp',
+          '粤北地区': '/image/4.webp'
         }
-        return images[regionName] || 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Guangdong%20cultural%20heritage%20traditional%20art&image_size=landscape_16_9'
+        return images[regionName] || '/image/1.webp'
       }
 
       function focusCameraOnRegion(region) {
