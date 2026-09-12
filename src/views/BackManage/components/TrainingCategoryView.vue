@@ -2,36 +2,31 @@
   <el-card>
     <template #header>
       <div class="card-header">
-        <span>活动分类管理</span>
+        <span>培训分类管理</span>
         <div class="header-actions">
-          <el-input
-            v-model="nameFilter"
-            placeholder="分类名称"
-            class="search-input"
-            clearable
-            @keyup.enter="searchList"
-          />
-          <el-select
-            v-model="statusFilter"
-            placeholder="状态"
-            clearable
-            class="status-select"
-            @change="searchList"
-          >
-            <el-option label="启用" :value="1" />
-            <el-option label="禁用" :value="0" />
-          </el-select>
-          <el-button :icon="Search" type="primary" @click="searchList">
-            查询
-          </el-button>
-          <el-button @click="resetFilters">重置</el-button>
-          <el-button type="success" @click="handleAdd">
+          <el-button type="primary" @click="handleAdd">
             <el-icon><Plus /></el-icon>新增分类
           </el-button>
         </div>
       </div>
     </template>
 
+    <!-- 筛选区域 -->
+    <div class="filter-area">
+      <el-input
+        v-model="nameFilter"
+        placeholder="分类名称"
+        class="search-input"
+        clearable
+        @keyup.enter="searchList"
+      />
+      <el-button :icon="Search" type="primary" @click="searchList">
+        查询
+      </el-button>
+      <el-button @click="resetFilters">重置</el-button>
+    </div>
+
+    <!-- 列表 -->
     <el-table
       v-loading="loading"
       :data="categoryList"
@@ -44,14 +39,14 @@
         label="序号"
         width="70"
       />
-      <el-table-column label="图标" width="100">
+      <el-table-column label="封面" width="100">
         <template #default="scope">
           <el-image
-            v-if="scope.row.icon"
-            style="width: 48px; height: 48px"
-            :src="scope.row.icon"
-            :preview-src-list="[scope.row.icon]"
+            style="width: 60px; height: 60px"
+            :src="scope.row.coverImage"
+            :preview-src-list="[scope.row.coverImage]"
             fit="cover"
+            :z-index="9999"
             preview-teleported
           >
             <template #error>
@@ -60,35 +55,22 @@
               </div>
             </template>
           </el-image>
-          <div v-else class="image-slot">
-            <el-icon><Picture /></el-icon>
-          </div>
         </template>
       </el-table-column>
-      <el-table-column prop="name" label="分类名称" min-width="140" />
+      <el-table-column
+        prop="name"
+        label="分类名称"
+        min-width="150"
+        show-overflow-tooltip
+      />
       <el-table-column
         prop="description"
-        label="分类描述"
-        min-width="220"
+        label="描述"
+        min-width="200"
         show-overflow-tooltip
       />
       <el-table-column prop="sortOrder" label="排序" width="80" />
-      <el-table-column label="状态" width="90">
-        <template #default="scope">
-          <el-tag
-            :type="scope.row.status === 1 ? 'success' : 'info'"
-            effect="light"
-          >
-            {{ scope.row.status === 1 ? '启用' : '禁用' }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="创建时间" width="170">
-        <template #default="scope">{{
-          formatTime(scope.row.createTime)
-        }}</template>
-      </el-table-column>
-      <el-table-column label="操作" width="150" fixed="right">
+      <el-table-column label="操作" width="160" fixed="right">
         <template #default="scope">
           <el-button size="small" type="primary" @click="handleEdit(scope.row)">
             编辑
@@ -103,7 +85,7 @@
         </template>
       </el-table-column>
       <template #empty>
-        <el-empty description="暂无活动分类" />
+        <el-empty description="暂无分类" />
       </template>
     </el-table>
 
@@ -119,10 +101,10 @@
       />
     </div>
 
-    <!-- 新增/编辑对话框 -->
+    <!-- 新增/编辑 对话框 -->
     <el-dialog
       v-model="dialogVisible"
-      :title="dialogMode === 'add' ? '新增活动分类' : '编辑活动分类'"
+      :title="dialogMode === 'add' ? '新增分类' : '编辑分类'"
       width="560px"
       :close-on-click-modal="false"
     >
@@ -135,37 +117,34 @@
         <el-form-item label="分类名称" prop="name">
           <el-input v-model="formData.name" placeholder="请输入分类名称" />
         </el-form-item>
-        <el-form-item label="分类图标" prop="icon">
+        <el-form-item label="封面图" prop="coverImage">
           <el-upload
             class="cover-uploader"
             :show-file-list="false"
-            :http-request="handleIconUpload"
-            :before-upload="beforeUpload"
+            :http-request="handleCoverUpload"
+            :before-upload="beforeImageUpload"
           >
             <img
-              v-if="formData.icon"
-              :src="formData.icon"
+              v-if="formData.coverImage"
+              :src="formData.coverImage"
               class="cover-image"
             />
             <el-icon v-else class="cover-uploader-icon"><Plus /></el-icon>
           </el-upload>
+          <div class="el-upload__tip">JPG/PNG，不超过 5MB</div>
         </el-form-item>
-        <el-form-item label="分类描述" prop="description">
+        <el-form-item label="描述" prop="description">
           <el-input
             v-model="formData.description"
             type="textarea"
             :rows="3"
+            maxlength="255"
+            show-word-limit
             placeholder="请输入分类描述"
           />
         </el-form-item>
         <el-form-item label="排序序号" prop="sortOrder">
           <el-input-number v-model="formData.sortOrder" :min="0" />
-        </el-form-item>
-        <el-form-item label="状态" prop="status">
-          <el-radio-group v-model="formData.status">
-            <el-radio :label="1">启用</el-radio>
-            <el-radio :label="0">禁用</el-radio>
-          </el-radio-group>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -189,13 +168,12 @@ import { ref, reactive, onMounted } from 'vue'
 import { Search, Plus, Picture } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
-  pageActivityCategory,
-  createActivityCategory,
-  updateActivityCategory,
-  deleteActivityCategory
-} from '@/api/activityCategory'
+  pageTrainingCategory,
+  createTrainingCategory,
+  updateTrainingCategory,
+  deleteTrainingCategory
+} from '@/api/trainingCategory'
 import { uploadFileAPI } from '@/api/file'
-import { formatTime } from '@/utils/format'
 
 const loading = ref(false)
 const categoryList = ref([])
@@ -203,7 +181,6 @@ const total = ref(0)
 const queryParams = reactive({ current: 1, size: 10 })
 
 const nameFilter = ref('')
-const statusFilter = ref('')
 
 const dialogVisible = ref(false)
 const dialogMode = ref('add')
@@ -213,16 +190,14 @@ const formRef = ref(null)
 const defaultForm = () => ({
   id: undefined,
   name: '',
-  icon: '',
+  coverImage: '',
   description: '',
-  sortOrder: 0,
-  status: 1
+  sortOrder: 0
 })
 const formData = reactive(defaultForm())
 
 const formRules = {
-  name: [{ required: true, message: '请输入分类名称', trigger: 'blur' }],
-  status: [{ required: true, message: '请选择状态', trigger: 'change' }]
+  name: [{ required: true, message: '请输入分类名称', trigger: 'blur' }]
 }
 
 const indexMethod = (index) =>
@@ -231,11 +206,10 @@ const indexMethod = (index) =>
 const fetchList = async () => {
   loading.value = true
   try {
-    const res = await pageActivityCategory({
+    const res = await pageTrainingCategory({
       current: queryParams.current,
       size: queryParams.size,
-      name: nameFilter.value || undefined,
-      status: statusFilter.value === '' ? undefined : statusFilter.value
+      name: nameFilter.value || undefined
     })
     if (res.code === '0' && res.data) {
       categoryList.value = res.data.records || []
@@ -248,7 +222,7 @@ const fetchList = async () => {
       total.value = 0
     }
   } catch (error) {
-    console.error('获取活动分类失败', error)
+    console.error('获取培训分类列表失败', error)
   } finally {
     loading.value = false
   }
@@ -261,7 +235,6 @@ const searchList = () => {
 
 const resetFilters = () => {
   nameFilter.value = ''
-  statusFilter.value = ''
   queryParams.current = 1
   fetchList()
 }
@@ -274,56 +247,61 @@ const handleAdd = () => {
 
 const handleEdit = (row) => {
   dialogMode.value = 'edit'
-  Object.assign(formData, defaultForm(), row)
+  Object.assign(formData, defaultForm(), {
+    id: row.id,
+    name: row.name || '',
+    coverImage: row.coverImage || '',
+    description: row.description || '',
+    sortOrder: row.sortOrder ?? 0
+  })
   dialogVisible.value = true
 }
 
 const handleDelete = (row) => {
-  ElMessageBox.confirm(`确定要删除分类「${row.name}」吗？`, '删除确认', {
-    confirmButtonText: '确定删除',
-    cancelButtonText: '取消',
-    type: 'warning'
-  })
+  ElMessageBox.confirm(
+    `确定要删除分类「${row.name}」吗？此操作不可撤销。`,
+    '删除确认',
+    {
+      confirmButtonText: '确定删除',
+      cancelButtonText: '取消',
+      type: 'warning'
+    }
+  )
     .then(async () => {
       try {
-        await deleteActivityCategory(row.id)
+        await deleteTrainingCategory(row.id)
         ElMessage.success('删除成功')
         if (categoryList.value.length === 1 && queryParams.current > 1) {
           queryParams.current--
         }
         fetchList()
       } catch (error) {
-        console.error('删除活动分类失败', error)
+        console.error('删除培训分类失败', error)
       }
     })
     .catch(() => {})
 }
 
-const beforeUpload = (file) => {
-  const isImage = [
-    'image/jpeg',
-    'image/png',
-    'image/gif',
-    'image/webp'
-  ].includes(file.type)
+const beforeImageUpload = (file) => {
+  const isImage = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type)
   const isLt5M = file.size / 1024 / 1024 < 5
-  if (!isImage) ElMessage.error('只能上传 JPG/PNG/GIF/WEBP 格式图片!')
+  if (!isImage) ElMessage.error('只能上传 JPG/PNG/WEBP 格式图片!')
   if (!isLt5M) ElMessage.error('图片大小不能超过 5MB!')
   return isImage && isLt5M
 }
 
-const handleIconUpload = async (options) => {
+const handleCoverUpload = async (options) => {
   const { file } = options
   try {
     const res = await uploadFileAPI([file])
     if (res.code === '0') {
-      formData.icon = res.data
+      formData.coverImage = res.data
       ElMessage.success('上传成功')
     } else {
       ElMessage.error(res.message || '上传失败')
     }
   } catch (error) {
-    console.error('图标上传出错', error)
+    console.error('封面上传出错', error)
   }
 }
 
@@ -333,16 +311,16 @@ const submitForm = () => {
     submitLoading.value = true
     try {
       if (dialogMode.value === 'add') {
-        await createActivityCategory({ ...formData })
+        await createTrainingCategory({ ...formData })
         ElMessage.success('新增成功')
       } else {
-        await updateActivityCategory({ ...formData })
+        await updateTrainingCategory({ ...formData })
         ElMessage.success('更新成功')
       }
       dialogVisible.value = false
       fetchList()
     } catch (error) {
-      console.error('提交活动分类失败', error)
+      console.error('提交培训分类失败', error)
     } finally {
       submitLoading.value = false
     }
@@ -361,18 +339,16 @@ onMounted(() => {
   align-items: center;
 }
 
-.header-actions {
+.filter-area {
   display: flex;
   gap: 12px;
+  margin-bottom: 20px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .search-input {
-  width: 160px;
-}
-
-.status-select {
-  width: 110px;
+  width: 200px;
 }
 
 .pagination-container {
@@ -392,8 +368,8 @@ onMounted(() => {
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 48px;
-  height: 48px;
+  width: 100%;
+  height: 100%;
   background: #f5f7fa;
   color: #909399;
   font-size: 20px;
@@ -405,8 +381,8 @@ onMounted(() => {
   cursor: pointer;
   position: relative;
   overflow: hidden;
-  width: 96px;
-  height: 96px;
+  width: 178px;
+  height: 100px;
 }
 
 .cover-uploader:hover {
@@ -416,16 +392,16 @@ onMounted(() => {
 .cover-uploader-icon {
   font-size: 28px;
   color: #8c939d;
-  width: 96px;
-  height: 96px;
-  line-height: 96px;
+  width: 178px;
+  height: 100px;
+  line-height: 100px;
   text-align: center;
 }
 
 .cover-image {
-  width: 96px;
-  height: 96px;
-  object-fit: cover;
+  width: 178px;
+  height: 100px;
   display: block;
+  object-fit: cover;
 }
 </style>

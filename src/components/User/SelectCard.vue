@@ -3,6 +3,13 @@ import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { ElMessageBox, ElMessage } from 'element-plus'
+import { Calendar, Reading } from '@element-plus/icons-vue'
+
+// Element Plus 图标映射（iconfont 中没有的图标走这里）
+const elIcons = {
+  Calendar,
+  Reading
+}
 
 const router = useRouter()
 const route = useRoute()
@@ -20,6 +27,20 @@ const lists = ref([
     text: '收藏项目',
     name: 'user/CollectionItems',
     isture: false
+  },
+  {
+    icon: '',
+    elIcon: 'Calendar',
+    text: '我的活动',
+    name: 'user/MyActivities',
+    istrue: false
+  },
+  {
+    icon: '',
+    elIcon: 'Reading',
+    text: '我的学习',
+    name: 'user/MyLearning',
+    istrue: false
   },
   {
     icon: 'icon-xiugaimima',
@@ -98,7 +119,13 @@ const checkPermission = (item) => {
       @click="navigater(item.name, index)"
       :class="{ active: item.istrue }"
     >
-      <p><i :class="`iconfont ${item.icon}`"></i>{{ item.text }}</p>
+      <p>
+        <el-icon v-if="item.elIcon" class="menu-el-icon">
+          <component :is="elIcons[item.elIcon]" />
+        </el-icon>
+        <i v-else :class="`iconfont ${item.icon}`"></i>
+        {{ item.text }}
+      </p>
     </div>
   </template>
 </template>
@@ -118,6 +145,10 @@ const checkPermission = (item) => {
     color: white;
     i {
       margin-right: 20px;
+    }
+    .menu-el-icon {
+      margin-right: 20px;
+      vertical-align: middle;
     }
   }
 }

@@ -22,7 +22,7 @@ const router = createRouter({
 
         {
           path: 'virtual',
-          component: () => import('@/views/Virtual/index.vue')
+          redirect: '/map'
         },
         {
           path: 'activity',
@@ -35,6 +35,10 @@ const router = createRouter({
         {
           path: 'education/resource/:id',
           component: () => import('@/views/Education/ResourceDetail.vue')
+        },
+        {
+          path: 'education/course/:id',
+          component: () => import('@/views/Education/CourseDetail.vue')
         },
         {
           path: 'feedback',
@@ -78,6 +82,16 @@ const router = createRouter({
           path: 'CollectionItems',
           component: () =>
             import('@/views/User/Useritems/CollectionItems/CollectionItems.vue')
+        },
+        {
+          path: 'MyActivities',
+          component: () =>
+            import('@/views/User/Useritems/MyActivities/MyActivities.vue')
+        },
+        {
+          path: 'MyLearning',
+          component: () =>
+            import('@/views/User/Useritems/MyLearning/MyLearning.vue')
         },
         {
           path: 'MessageNotification',

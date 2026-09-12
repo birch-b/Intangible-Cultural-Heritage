@@ -38,6 +38,7 @@
             <el-menu-item index="4-2">项目详情管理</el-menu-item>
             <el-menu-item index="5-1">活动管理</el-menu-item>
             <el-menu-item index="5-2">活动分类列表</el-menu-item>
+            <el-menu-item index="5-3">活动报名管理</el-menu-item>
           </el-sub-menu>
           <!-- 教育培训 -->
           <el-sub-menu index="6">
@@ -48,6 +49,9 @@
               <span class="ml-2">教育培训</span>
             </template>
             <el-menu-item index="6-1">非遗资源管理</el-menu-item>
+            <el-menu-item index="6-2">课程管理</el-menu-item>
+            <el-menu-item index="6-3">培训分类</el-menu-item>
+            <el-menu-item index="6-4">学习记录</el-menu-item>
           </el-sub-menu>
           <!-- 用户与系统 -->
           <el-sub-menu index="system">
@@ -59,6 +63,7 @@
             </template>
             <el-menu-item index="2">管理员管理</el-menu-item>
             <el-menu-item index="8-1">用户反馈管理</el-menu-item>
+            <el-menu-item index="9-1">数据统计</el-menu-item>
           </el-sub-menu>
           <!-- 退出登录 -->
           <el-menu-item
@@ -125,8 +130,12 @@ import CategoryView from './components/CategoryView.vue'
 import DetailView from './components/DetailView.vue'
 import ActivityListView from './components/ActivityListView.vue'
 import ActivityCategoryView from './components/ActivityCategoryView.vue'
+import ActivityRegistrationView from './components/ActivityRegistrationView.vue'
 import HeritageMediaView from './components/HeritageMediaView.vue'
 import TrainingRegistrationView from './components/TrainingRegistrationView.vue'
+import TrainingCourseView from './components/TrainingCourseView.vue'
+import TrainingCategoryView from './components/TrainingCategoryView.vue'
+import StatisticsView from './components/StatisticsView.vue'
 import UserFeedbackView from './components/UserFeedbackView.vue'
 
 // 定义 activeMenu
@@ -179,10 +188,18 @@ const currentComponent = computed(() => {
       return ActivityListView
     case 'ActivityCategoryView':
       return ActivityCategoryView
+    case 'ActivityRegistrationView':
+      return ActivityRegistrationView
     case 'HeritageMediaView':
       return HeritageMediaView
     case 'TrainingRegistrationView':
       return TrainingRegistrationView
+    case 'TrainingCourseView':
+      return TrainingCourseView
+    case 'TrainingCategoryView':
+      return TrainingCategoryView
+    case 'StatisticsView':
+      return StatisticsView
     case 'UserFeedbackView':
       return UserFeedbackView
     default:
@@ -238,11 +255,26 @@ const handleMenuSelect = (index) => {
     case '5-2':
       currentView.value = 'ActivityCategoryView'
       break
+    case '5-3':
+      currentView.value = 'ActivityRegistrationView'
+      break
     case '6-1':
       currentView.value = 'HeritageMediaView'
       break
+    case '6-2':
+      currentView.value = 'TrainingCourseView'
+      break
+    case '6-3':
+      currentView.value = 'TrainingCategoryView'
+      break
+    case '6-4':
+      currentView.value = 'TrainingRegistrationView'
+      break
     case '8-1':
       currentView.value = 'UserFeedbackView'
+      break
+    case '9-1':
+      currentView.value = 'StatisticsView'
       break
     default:
       currentView.value = 'HomeView'

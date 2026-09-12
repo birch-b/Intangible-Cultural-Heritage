@@ -6,11 +6,11 @@ import { getCodeAPI, resetPasswordAPI } from '@/api/user'
 const router = useRouter()
 
 const form = reactive({
-  phone: '',
+  email: '',
   yzm: ''
 })
 const rules = reactive({
-  phone: [
+  email: [
     { required: true, message: '请输入邮箱', trigger: 'blur' },
     {
       pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
@@ -25,12 +25,12 @@ const min = ref(0)
 const istrue = ref(false)
 
 const count = async () => {
-  if (!form.phone) {
+  if (!form.email) {
     ElMessage.warning('请先输入邮箱')
     return
   }
   try {
-    await getCodeAPI(form.phone)
+    await getCodeAPI(form.email)
     ElMessage.success('验证码已发送')
     istrue.value = true
     min.value = 60
@@ -83,7 +83,7 @@ const change = async () => {
     }
     try {
       await resetPasswordAPI({
-        email: form.phone,
+        email: form.email,
         code: form.yzm,
         newPassword: form1.password
       })
@@ -139,10 +139,10 @@ const prevStep = () => {
             <el-form-item
               label="请输入邮箱"
               label-position="right"
-              prop="phone"
+              prop="email"
             >
               <el-input
-                v-model="form.phone"
+                v-model="form.email"
                 class="input"
                 placeholder="请输入邮箱"
                 style="width: 12vw"

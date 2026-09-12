@@ -1,10 +1,11 @@
 <script setup>
 import { reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { ElMessage } from 'element-plus'
 
 const router = useRouter()
+const route = useRoute()
 const userStore = useUserStore()
 
 const loginFormRef = ref(null)
@@ -85,7 +86,11 @@ const rules1 = reactive({
   ],
   email: [
     { required: true, message: '请输入邮箱', trigger: 'blur' },
-    { pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, message: '请输入有效的邮箱地址', trigger: 'blur' }
+    {
+      pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+      message: '请输入有效的邮箱地址',
+      trigger: 'blur'
+    }
   ],
   emailCode: [{ required: true, message: '请输入验证码', trigger: 'blur' }]
 })
@@ -165,7 +170,9 @@ const handleLogin = async () => {
           password: form.password
         })
         ElMessage.success('登录成功')
-        router.push('/')
+        // 支持登录后回跳到来源页（如活动详情报名前跳转登录）
+        const redirect = route.query.redirect
+        router.push(redirect && typeof redirect === 'string' ? redirect : '/')
       } catch (error) {
         console.error(error)
       }
@@ -291,11 +298,7 @@ const handleRegister = async () => {
               placeholder="请再次确认密码"
             />
           </el-form-item>
-          <el-form-item
-            label="邮箱"
-            label-position="right"
-            prop="email"
-          >
+          <el-form-item label="邮箱" label-position="right" prop="email">
             <el-input
               v-model="form1.email"
               class="input"
@@ -310,11 +313,7 @@ const handleRegister = async () => {
               >{{ min === 0 ? '获取验证码' : min + 's' }}</el-button
             >
           </el-form-item>
-          <el-form-item
-            label="验证码"
-            label-position="right"
-            prop="emailCode"
-          >
+          <el-form-item label="验证码" label-position="right" prop="emailCode">
             <el-input
               v-model="form1.emailCode"
               class="input"
@@ -322,7 +321,12 @@ const handleRegister = async () => {
             />
           </el-form-item>
           <el-form-item class="center">
-            <el-button type="primary" @click="handleRegister" :loading="isRegistering">注册</el-button>
+            <el-button
+              type="primary"
+              @click="handleRegister"
+              :loading="isRegistering"
+              >注册</el-button
+            >
           </el-form-item>
         </el-form>
       </div>
@@ -500,7 +504,6 @@ p {
         width: 100%;
         max-width: 250px;
       }
-      
     }
   }
   .left,

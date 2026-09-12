@@ -3,19 +3,13 @@ import { ArrowRight } from '@element-plus/icons-vue'
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { pageActivity } from '@/api/heritageActivity'
+import { ACTIVITY_TYPES } from '@/constants/activityType'
 
 const router = useRouter()
 
-// 下拉框数据
+// 下拉框数据（活动分类为后端固定枚举，统一维护于 src/constants/activityType.js）
 const selectValue = ref('')
-const selectOptions = ref([
-  { label: '展示推广', value: 1 },
-  { label: '表演活动', value: 2 },
-  { label: '交流融合', value: 3 },
-  { label: '教育体验', value: 4 },
-  { label: '市集消费', value: 5 },
-  { label: '学术交流', value: 6 }
-])
+const selectOptions = ref(ACTIVITY_TYPES)
 
 // 表格数据
 const tableData = ref([])

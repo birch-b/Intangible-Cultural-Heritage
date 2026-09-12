@@ -317,22 +317,11 @@ import {
   deleteActivity
 } from '@/api/heritageActivity'
 import { uploadFileAPI } from '@/api/file'
+import { ACTIVITY_TYPES, getActivityTypeLabel } from '@/constants/activityType'
 import dayjs from 'dayjs'
 
-// --- 常量定义 ---
-const ACTIVITY_TYPES = [
-  { label: '展示推广', value: 1 },
-  { label: '表演活动', value: 2 },
-  { label: '交流融合', value: 3 },
-  { label: '教育体验', value: 4 },
-  { label: '市集消费', value: 5 },
-  { label: '学术交流', value: 6 }
-]
-
-const getTypeName = (val) => {
-  const type = ACTIVITY_TYPES.find((t) => t.value === val)
-  return type ? type.label : '未知'
-}
+// 活动分类名称（枚举统一维护于 src/constants/activityType.js）
+const getTypeName = (val) => getActivityTypeLabel(val)
 
 // 格式化日期时间
 const formatDateTime = (row, column, cellValue) => {
@@ -454,7 +443,7 @@ const handleDeleteNews = (row) => {
       await deleteActivity(row.id)
       ElMessage.success('删除成功')
       searchNews()
-    } catch (error) {
+    } catch {
       ElMessage.error('删除失败')
     }
   })

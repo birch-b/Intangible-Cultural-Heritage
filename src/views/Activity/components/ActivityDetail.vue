@@ -1,14 +1,67 @@
 <script setup>
 import { ArrowRight } from '@element-plus/icons-vue'
-import { computed, ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, ref, reactive, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { getActivityDetail } from '@/api/heritageActivity'
+import {
+  registerActivity,
+  cancelActivityRegistration,
+  checkActivityRegistration
+} from '@/api/activityRegistration'
+import { getActivityTypeLabel } from '@/constants/activityType'
+import { useUserStore } from '@/stores/user'
 import dayjs from 'dayjs'
 
 const route = useRoute()
+const router = useRouter()
+const userStore = useUserStore()
 const detail = ref(null)
 const loading = ref(false)
 const errorMessage = ref('')
+
+// 报名相关状态
+const signupLoading = ref(false)
+const isRegistered = ref(false) // 当前用户是否已报名
+const signupDialogVisible = ref(false)
+const signupFormRef = ref(null)
+const signupForm = reactive({
+  remark: ''
+})
+
+// 已报名人数
+const registeredCount = computed(
+  () => Number(detail.value?.registeredCount) || 0
+)
+
+// 报名截止时间
+const registrationDeadline = computed(
+  () => detail.value?.registrationDeadline || null
+)
+
+// 人数上限（0 表示不限制）
+const maxParticipants = computed(
+  () => Number(detail.value?.maxParticipants) || 0
+)
+
+// 报名是否已截止
+const isDeadlinePassed = computed(() => {
+  const deadline = registrationDeadline.value
+  if (!deadline) return false
+  return dayjs(deadline).isBefore(dayjs())
+})
+
+// 是否名额已满
+const isFull = computed(() => {
+  return (
+    maxParticipants.value > 0 && registeredCount.value >= maxParticipants.value
+  )
+})
+
+// 报名按钮是否禁用
+const signupDisabled = computed(
+  () => isRegistered.value || isDeadlinePassed.value || isFull.value
+)
 
 const imageList = computed(() => {
   const list = detail.value?.imageList
@@ -48,6 +101,9 @@ const getDetail = async () => {
       detail.value = normalized
       if (!detail.value) {
         errorMessage.value = '未获取到活动详情数据'
+      } else {
+        // 登录用户查询报名状态（接口未就绪时静默失败，不影响详情浏览）
+        fetchRegistrationStatus(normalized.id)
       }
       return
     }
@@ -63,20 +119,86 @@ const getDetail = async () => {
   }
 }
 
+// 查询当前用户对该活动的报名状态
+const fetchRegistrationStatus = async (activityId) => {
+  if (!userStore.token || !activityId) return
+  try {
+    const res = await checkActivityRegistration(activityId)
+    if (res.code === '0') {
+      isRegistered.value = !!res.data
+    }
+  } catch (error) {
+    // 报名接口未上线时忽略，页面按未报名展示
+    console.warn('查询报名状态失败', error)
+  }
+}
+
+// 点击报名：未登录先跳转登录
+const handleSignupClick = () => {
+  if (!userStore.token) {
+    ElMessage.warning('请先登录后再报名')
+    router.push({
+      path: '/login',
+      query: { redirect: route.fullPath }
+    })
+    return
+  }
+  signupForm.remark = ''
+  signupDialogVisible.value = true
+}
+
+// 提交报名
+const submitSignup = () => {
+  signupFormRef.value?.validate(async (valid) => {
+    if (!valid) return
+    signupLoading.value = true
+    try {
+      const res = await registerActivity({
+        activityId: detail.value.id,
+        remark: signupForm.remark
+      })
+      if (res.code === '0') {
+        ElMessage.success('报名成功！可在个人中心“我的活动”查看')
+        signupDialogVisible.value = false
+        isRegistered.value = true
+        detail.value.registeredCount = registeredCount.value + 1
+      }
+    } catch (error) {
+      console.error('报名失败', error)
+    } finally {
+      signupLoading.value = false
+    }
+  })
+}
+
+// 取消报名
+const handleCancelSignup = () => {
+  ElMessageBox.confirm('确定要取消本次活动报名吗？', '取消报名', {
+    confirmButtonText: '确定取消',
+    cancelButtonText: '再想想',
+    type: 'warning'
+  })
+    .then(async () => {
+      try {
+        await cancelActivityRegistration(detail.value.id)
+        ElMessage.success('已取消报名')
+        isRegistered.value = false
+        detail.value.registeredCount = Math.max(0, registeredCount.value - 1)
+      } catch (error) {
+        console.error('取消报名失败', error)
+      }
+    })
+    .catch(() => {})
+}
+
 const formatTime = (time) => {
   return time ? dayjs(time).format('YYYY-MM-DD HH:mm:ss') : ''
 }
 
+// 活动分类名称（枚举统一维护于 src/constants/activityType.js）
 const getTypeName = (val) => {
-  const map = {
-    1: '展示推广',
-    2: '表演活动',
-    3: '交流融合',
-    4: '教育体验',
-    5: '市集消费',
-    6: '学术交流'
-  }
-  return map[val] || '其他活动'
+  const label = getActivityTypeLabel(val)
+  return label === '未知' ? '其他活动' : label
 }
 
 onMounted(() => {
@@ -128,7 +250,77 @@ onMounted(() => {
           <span class="label">活动地点：</span>
           <span class="value">{{ detail.location || '暂无地点信息' }}</span>
         </div>
+        <div class="info-item">
+          <span class="label">报名人数：</span>
+          <span class="value">
+            {{ registeredCount }} 人<template v-if="maxParticipants > 0">
+              / 上限 {{ maxParticipants }} 人</template
+            >
+          </span>
+        </div>
+        <div class="info-item" v-if="registrationDeadline">
+          <span class="label">报名截止：</span>
+          <span class="value">{{ formatTime(registrationDeadline) }}</span>
+        </div>
       </div>
+
+      <!-- 报名操作区 -->
+      <div class="signup-bar">
+        <template v-if="isRegistered">
+          <el-tag type="success" size="large" effect="light">已报名</el-tag>
+          <el-button type="danger" plain @click="handleCancelSignup">
+            取消报名
+          </el-button>
+        </template>
+        <template v-else>
+          <el-button
+            type="primary"
+            size="large"
+            :loading="signupLoading"
+            :disabled="signupDisabled"
+            @click="handleSignupClick"
+          >
+            {{
+              isDeadlinePassed ? '报名已截止' : isFull ? '名额已满' : '立即报名'
+            }}
+          </el-button>
+        </template>
+      </div>
+
+      <!-- 报名信息填写弹窗 -->
+      <el-dialog
+        v-model="signupDialogVisible"
+        title="活动报名"
+        width="460px"
+        :close-on-click-modal="false"
+      >
+        <el-form ref="signupFormRef" :model="signupForm" label-width="90px">
+          <el-form-item label="活动名称">
+            <span>{{ detail.title }}</span>
+          </el-form-item>
+          <el-form-item label="报名备注">
+            <el-input
+              v-model="signupForm.remark"
+              type="textarea"
+              :rows="3"
+              maxlength="255"
+              show-word-limit
+              placeholder="选填，如有同行人数或特殊需求可备注"
+            />
+          </el-form-item>
+        </el-form>
+        <template #footer>
+          <span class="dialog-footer">
+            <el-button @click="signupDialogVisible = false">取消</el-button>
+            <el-button
+              type="primary"
+              :loading="signupLoading"
+              @click="submitSignup"
+              >确认报名</el-button
+            >
+          </span>
+        </template>
+      </el-dialog>
 
       <div class="cover-image" v-if="detail.coverImage">
         <img :src="detail.coverImage" alt="活动封面" />
@@ -246,6 +438,14 @@ onMounted(() => {
           color: #606266;
         }
       }
+    }
+
+    .signup-bar {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 30px;
     }
 
     .cover-image {

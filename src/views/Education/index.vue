@@ -1,107 +1,326 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import CardItem from './components/cardItem.vue'
-import { getProjectList, getNewsList, getLectureList } from '@/api/education'
+import { Picture, User, Reading } from '@element-plus/icons-vue'
+import { pageCourse } from '@/api/course'
 
 const router = useRouter()
 
-const projectList = ref([])
-const newsList = ref([])
-const lectureList = ref([])
+const TABS = [
+  { value: 1, label: '在线课程' },
+  { value: 2, label: '研培项目' },
+  { value: 3, label: '讲座' },
+  { value: 4, label: '资讯' }
+]
 
-const fetchData = async () => {
+const activeType = ref(1)
+const loading = ref(false)
+const courseList = ref([])
+const total = ref(0)
+const queryParams = reactive({ current: 1, size: 9 })
+
+const fetchList = async () => {
+  loading.value = true
   try {
-    // 获取非遗视听（项目）列表
-    const projectRes = await getProjectList()
-    if (projectRes.data && projectRes.data.records) {
-      projectList.value = projectRes.data.records
-    }
-
-    // 获取媒体关注列表
-    const newsRes = await getNewsList()
-    if (newsRes.data && newsRes.data.records) {
-      newsList.value = newsRes.data.records
-    }
-
-    // 获取文化讲堂列表
-    const lectureRes = await getLectureList()
-    if (lectureRes.data && lectureRes.data.records) {
-      lectureList.value = lectureRes.data.records
+    const res = await pageCourse({
+      current: queryParams.current,
+      size: queryParams.size,
+      contentType: activeType.value,
+      status: 1
+    })
+    if (res.code === '0' && res.data) {
+      courseList.value = res.data.records || []
+      total.value = Number(res.data.total) || 0
+    } else if (res.records) {
+      courseList.value = res.records
+      total.value = Number(res.total) || 0
+    } else {
+      courseList.value = []
+      total.value = 0
     }
   } catch (error) {
-    console.error('获取教育模块数据失败', error)
+    console.error('获取培训内容失败', error)
+  } finally {
+    loading.value = false
   }
 }
 
-const handleCardClick = (item, type) => {
-  if (type === 'project') {
-    // 跳转到资源详情页
-    router.push(`/education/resource/${item.id}`)
-  } else {
-    // 其他类型暂时处理，例如打开链接或弹窗
-    console.log('Clicked:', type, item)
-    if (item.url) {
-      window.open(item.url, '_blank')
-    }
-  }
+const handleTabChange = () => {
+  queryParams.current = 1
+  fetchList()
+}
+
+const goDetail = (item) => {
+  router.push(`/education/course/${item.id}`)
 }
 
 onMounted(() => {
-  fetchData()
+  fetchList()
 })
 </script>
 
 <template>
-  <div class="container">
-    <div class="son_module">
-      <div class="title">
-        <h2>非遗视听</h2>
+  <div class="education-page">
+    <div class="page-inner">
+      <div class="page-header">
+        <h2>
+          <el-icon><Reading /></el-icon> 教育培训
+        </h2>
+        <p>在线课程 · 研培项目 · 文化讲座 · 非遗资讯</p>
       </div>
-      <CardItem :list="projectList" type="project" @click="handleCardClick" />
-    </div>
-    <div class="son_module">
-      <div class="title">
-        <h2>媒体关注</h2>
+
+      <el-tabs
+        v-model="activeType"
+        class="edu-tabs"
+        @tab-change="handleTabChange"
+      >
+        <el-tab-pane
+          v-for="tab in TABS"
+          :key="tab.value"
+          :label="tab.label"
+          :name="tab.value"
+        />
+      </el-tabs>
+
+      <div v-loading="loading" class="course-grid">
+        <div
+          v-for="item in courseList"
+          :key="item.id"
+          class="course-card"
+          @click="goDetail(item)"
+        >
+          <div class="cover-wrapper">
+            <img
+              v-if="item.coverImage"
+              :src="item.coverImage"
+              :alt="item.title"
+            />
+            <div v-else class="cover-empty">
+              <el-icon :size="36"><Picture /></el-icon>
+            </div>
+            <el-tag class="type-tag" effect="dark" size="small">
+              {{
+                item.contentTypeName ||
+                TABS.find((t) => t.value === activeType)?.label
+              }}
+            </el-tag>
+          </div>
+          <div class="card-body">
+            <h3 class="card-title">{{ item.title }}</h3>
+            <p class="card-summary">{{ item.summary || '暂无简介' }}</p>
+            <div class="card-meta">
+              <span class="meta-item">
+                <el-icon><User /></el-icon>
+                {{ item.teacher || '佚名' }}
+              </span>
+              <span class="meta-price">
+                <el-tag v-if="item.isFree === 1" type="success" size="small"
+                  >免费</el-tag
+                >
+                <el-tag v-else type="danger" size="small"
+                  >¥{{ item.fee ?? 0 }}</el-tag
+                >
+              </span>
+            </div>
+            <div class="card-footer">
+              <span>{{ item.enrolledCount || 0 }} 人已学习</span>
+              <span v-if="item.duration">{{ item.duration }}</span>
+            </div>
+          </div>
+        </div>
+        <el-empty
+          v-if="!loading && courseList.length === 0"
+          description="暂无内容"
+        />
       </div>
-      <CardItem :list="newsList" type="news" @click="handleCardClick" />
-    </div>
-    <div class="son_module">
-      <div class="title">
-        <h2>文化讲堂</h2>
+
+      <div class="pagination-wrap" v-if="total > 0">
+        <el-pagination
+          v-model:current-page="queryParams.current"
+          v-model:page-size="queryParams.size"
+          layout="prev, pager, next"
+          :total="total"
+          :page-sizes="[9]"
+          @current-change="fetchList"
+        />
       </div>
-      <CardItem :list="lectureList" type="lecture" @click="handleCardClick" />
     </div>
   </div>
 </template>
 
 <style scoped lang="scss">
-.container {
-  width: 100vw;
-  height: 220vh;
+.education-page {
+  min-height: 100vh;
   background-color: #e7eef7;
+  padding: 30px 0 50px;
+}
 
-  .son_module {
-    width: 85vw;
-    height: 70vh;
-    margin: 0 auto;
+.page-inner {
+  width: 85vw;
+  margin: 0 auto;
+}
+
+.page-header {
+  text-align: center;
+  margin-bottom: 10px;
+
+  h2 {
+    font-size: 28px;
+    color: #8b0000;
+    margin: 0 0 8px;
     display: flex;
-    flex-wrap: wrap;
-    align-content: space-around;
-    justify-content: space-around;
-    // background-color: pink;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
 
-    .title {
-      width: 80vw;
-      text-align: center;
-    }
+  p {
+    color: #666;
+    font-size: 14px;
+    margin: 0;
+  }
+}
 
-    .img_container {
-      width: 25vw;
-      height: 26vh;
-      border-radius: 10px;
-      background-color: #fff;
+.edu-tabs {
+  justify-content: center;
+
+  :deep(.el-tabs__nav-wrap::after) {
+    display: none;
+  }
+
+  :deep(.el-tabs__item) {
+    font-size: 16px;
+  }
+}
+
+.course-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  min-height: 200px;
+}
+
+.course-card {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+
+    .cover-wrapper img {
+      transform: scale(1.05);
     }
+  }
+}
+
+.cover-wrapper {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+
+  .cover-empty {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f0f2f5;
+    color: #909399;
+  }
+
+  .type-tag {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+  }
+}
+
+.card-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.card-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  color: #333;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card-summary {
+  margin: 0;
+  font-size: 13px;
+  color: #888;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 39px;
+}
+
+.card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #666;
+
+  .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+}
+
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #999;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 8px;
+  margin-top: auto;
+}
+
+.pagination-wrap {
+  margin-top: 30px;
+  display: flex;
+  justify-content: center;
+}
+
+@media (max-width: 1024px) {
+  .course-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .course-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>

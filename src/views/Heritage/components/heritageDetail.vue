@@ -1,9 +1,19 @@
 <script setup>
-import { ArrowRight, Star, StarFilled } from '@element-plus/icons-vue'
-import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import {
+  ArrowRight,
+  Star,
+  StarFilled,
+  ZoomIn,
+  ZoomOut,
+  RefreshLeft,
+  RefreshRight,
+  Aim
+} from '@element-plus/icons-vue'
+import { ref, watch, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import {
   getHeritageDetailAPI,
+  getHeritagePageAPI,
   addHeritageCollectionAPI,
   cancelHeritageCollectionAPI,
   checkHeritageCollectionAPI
@@ -11,10 +21,56 @@ import {
 import { ElMessage } from 'element-plus'
 
 const route = useRoute()
+const router = useRouter()
 const detail = ref({})
 const loading = ref(false)
 const isCollected = ref(false)
 const collectLoading = ref(false)
+
+// 图片缩放/旋转
+const scale = ref(1)
+const rotate = ref(0)
+const zoomIn = () => {
+  scale.value = Math.min(scale.value + 0.2, 4)
+}
+const zoomOut = () => {
+  scale.value = Math.max(scale.value - 0.2, 0.4)
+}
+const rotateLeft = () => {
+  rotate.value -= 90
+}
+const rotateRight = () => {
+  rotate.value += 90
+}
+const resetImage = () => {
+  scale.value = 1
+  rotate.value = 0
+}
+
+// 相关推荐
+const relatedList = ref([])
+const fetchRelated = async (categoryId, currentId) => {
+  if (!categoryId) return
+  try {
+    const res = await getHeritagePageAPI({
+      current: 1,
+      size: 6,
+      categoryId,
+      status: 2
+    })
+    const data = res.data || res
+    const records = data.records || []
+    relatedList.value = records
+      .filter((item) => String(item.id) !== String(currentId))
+      .slice(0, 4)
+  } catch (e) {
+    console.error(e)
+  }
+}
+
+const goRelated = (item) => {
+  router.push(`/heri_detail?id=${item.id}`)
+}
 
 const getDetail = async () => {
   const id = route.query.id
@@ -25,6 +81,7 @@ const getDetail = async () => {
     if (res.code === '0' || res.code === 200 || !res.code) {
       detail.value = res.data || res
       checkCollection(id)
+      fetchRelated(detail.value.categoryId, id)
     }
   } catch (e) {
     console.error(e)
@@ -70,6 +127,17 @@ const toggleCollect = async () => {
   }
 }
 
+watch(
+  () => route.query.id,
+  (newId) => {
+    if (newId) {
+      resetImage()
+      relatedList.value = []
+      getDetail()
+    }
+  }
+)
+
 onMounted(() => {
   getDetail()
 })
@@ -92,14 +160,37 @@ onMounted(() => {
     </div>
     <div class="de_content" v-loading="loading">
       <div class="left_image">
-        <el-image
-          v-if="detail.coverImage"
-          :src="detail.coverImage"
-          fit="contain"
-          style="width: 100%; height: 100%"
-          preview-teleported
-          :preview-src-list="[detail.coverImage]"
-        />
+        <template v-if="detail.coverImage">
+          <div class="image-viewer">
+            <img
+              :src="detail.coverImage"
+              :alt="detail.title"
+              class="viewer-img"
+              :style="{
+                transform: `scale(${scale}) rotate(${rotate}deg)`
+              }"
+              draggable="false"
+            />
+            <div class="viewer-toolbar">
+              <el-button circle :icon="ZoomOut" title="缩小" @click="zoomOut" />
+              <span class="zoom-text">{{ Math.round(scale * 100) }}%</span>
+              <el-button circle :icon="ZoomIn" title="放大" @click="zoomIn" />
+              <el-button
+                circle
+                :icon="RefreshLeft"
+                title="向左旋转"
+                @click="rotateLeft"
+              />
+              <el-button
+                circle
+                :icon="RefreshRight"
+                title="向右旋转"
+                @click="rotateRight"
+              />
+              <el-button circle :icon="Aim" title="重置" @click="resetImage" />
+            </div>
+          </div>
+        </template>
         <div v-else class="no-image">暂无图片</div>
       </div>
       <div class="right_text">
@@ -129,17 +220,41 @@ onMounted(() => {
         <div class="item-content" v-html="detail.content"></div>
       </div>
     </div>
+    <!-- 相关推荐 -->
+    <div class="related-wrap" v-if="relatedList.length > 0">
+      <h2 class="related-title">相关非遗推荐</h2>
+      <div class="related-list">
+        <div
+          v-for="item in relatedList"
+          :key="item.id"
+          class="related-card"
+          @click="goRelated(item)"
+        >
+          <div class="related-cover">
+            <img
+              v-if="item.coverImage"
+              :src="item.coverImage"
+              :alt="item.title"
+            />
+            <div v-else class="related-noimg">暂无图片</div>
+          </div>
+          <div class="related-name" :title="item.title">{{ item.title }}</div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <style scope lang="scss">
 .container {
   width: 100vw;
-  height: 100vh;
+  min-height: 100vh;
+  height: auto;
   display: flex;
   flex-wrap: wrap;
   justify-content: space-around;
   background-color: #88393c;
+  padding-bottom: 40px;
 
   .tab {
     width: 100%;
@@ -163,7 +278,7 @@ onMounted(() => {
 
   .de_content {
     width: 75%;
-    height: 80%;
+    height: 72vh;
     margin: 0 auto;
     display: flex;
     flex-wrap: wrap;
@@ -180,6 +295,54 @@ onMounted(() => {
       display: flex;
       align-items: center;
       justify-content: center;
+      position: relative;
+      overflow: hidden;
+
+      .image-viewer {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+
+      .viewer-img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        transition: transform 0.2s ease;
+        transform-origin: center center;
+        user-select: none;
+      }
+
+      .viewer-toolbar {
+        position: absolute;
+        bottom: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(0, 0, 0, 0.6);
+        padding: 6px 10px;
+        border-radius: 20px;
+        z-index: 10;
+
+        .el-button {
+          color: #fff;
+          border-color: rgba(255, 255, 255, 0.4);
+          background: transparent;
+        }
+
+        .zoom-text {
+          color: #fff;
+          font-size: 13px;
+          min-width: 44px;
+          text-align: center;
+        }
+      }
 
       .no-image {
         color: #fff;
@@ -232,6 +395,84 @@ onMounted(() => {
         }
       }
     }
+  }
+
+  .related-wrap {
+    width: 75%;
+    margin: 30px auto 0;
+    background-color: rgba(216, 207, 208, 0.95);
+    border-radius: 8px;
+    padding: 20px;
+
+    .related-title {
+      margin: 0 0 16px;
+      font-size: 20px;
+      color: #88393c;
+    }
+
+    .related-list {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .related-card {
+      background: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: pointer;
+      transition:
+        transform 0.3s ease,
+        box-shadow 0.3s ease;
+
+      &:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+
+        .related-cover img {
+          transform: scale(1.06);
+        }
+      }
+    }
+
+    .related-cover {
+      width: 100%;
+      height: 130px;
+      overflow: hidden;
+      background: #f0f2f5;
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+      }
+
+      .related-noimg {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #909399;
+        font-size: 13px;
+      }
+    }
+
+    .related-name {
+      padding: 10px;
+      font-size: 14px;
+      color: #333;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+}
+
+@media (max-width: 1024px) {
+  .container .related-wrap .related-list {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 </style>
