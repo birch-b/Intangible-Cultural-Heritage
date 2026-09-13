@@ -72,12 +72,12 @@ export function checkActivityRegistration(activityId) {
 }
 
 /**
- * 分页查询报名记录（后台管理）
- * @param {Object} params - { current, size }
+ * 管理端分页查询全部报名记录（可按活动/状态/用户筛选）
+ * @param {Object} params - { current, size, activityId?, status?, userId? }
  */
 export function pageRegistration(params) {
   return request({
-    url: '/admin/v1/activity-registration/page',
+    url: '/admin/v1/activity-registration/admin/page',
     method: 'get',
     params
   })

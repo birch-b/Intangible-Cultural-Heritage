@@ -3,8 +3,42 @@
     <template #header>
       <div class="card-header">
         <span>活动报名管理</span>
+        <el-button :icon="Refresh" @click="fetchList">刷新</el-button>
       </div>
     </template>
+
+    <!-- 筛选区域 -->
+    <div class="filter-area">
+      <el-input
+        v-model="activityIdFilter"
+        placeholder="活动ID"
+        class="filter-input"
+        clearable
+        @keyup.enter="searchList"
+      />
+      <el-select
+        v-model="statusFilter"
+        placeholder="报名状态"
+        clearable
+        class="status-select"
+        @change="searchList"
+      >
+        <el-option label="已报名" :value="1" />
+        <el-option label="已取消" :value="2" />
+        <el-option label="已签到" :value="3" />
+      </el-select>
+      <el-input
+        v-model="userIdFilter"
+        placeholder="用户ID"
+        class="filter-input"
+        clearable
+        @keyup.enter="searchList"
+      />
+      <el-button :icon="Search" type="primary" @click="searchList"
+        >查询</el-button
+      >
+      <el-button @click="resetFilters">重置</el-button>
+    </div>
 
     <!-- 报名列表 -->
     <el-table
@@ -25,18 +59,19 @@
         min-width="180"
         show-overflow-tooltip
       />
-      <el-table-column label="活动时间" width="180">
-        <template #default="scope">
-          {{ scope.row.activityTime || '—' }}
-        </template>
-      </el-table-column>
       <el-table-column
-        prop="location"
-        label="活动地点"
-        width="150"
+        prop="username"
+        label="报名人"
+        width="120"
+        show-overflow-tooltip
+      />
+      <el-table-column
+        prop="phone"
+        label="联系电话"
+        width="130"
         show-overflow-tooltip
       >
-        <template #default="scope">{{ scope.row.location || '—' }}</template>
+        <template #default="scope">{{ scope.row.phone || '—' }}</template>
       </el-table-column>
       <el-table-column label="报名时间" width="170">
         <template #default="scope">
@@ -89,11 +124,11 @@
         <el-descriptions-item label="活动名称">
           {{ currentRecord.activityTitle || '—' }}
         </el-descriptions-item>
-        <el-descriptions-item label="活动时间">
-          {{ currentRecord.activityTime || '—' }}
+        <el-descriptions-item label="报名人">
+          {{ currentRecord.username || '—' }}
         </el-descriptions-item>
-        <el-descriptions-item label="活动地点">
-          {{ currentRecord.location || '—' }}
+        <el-descriptions-item label="联系电话">
+          {{ currentRecord.phone || '—' }}
         </el-descriptions-item>
         <el-descriptions-item label="报名时间">
           {{ formatTime(currentRecord.createTime) }}
@@ -119,6 +154,7 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
+import { Search, Refresh } from '@element-plus/icons-vue'
 import { pageRegistration } from '@/api/activityRegistration'
 import { formatTime } from '@/utils/format'
 
@@ -129,6 +165,11 @@ const queryParams = reactive({
   current: 1,
   size: 10
 })
+
+// 筛选
+const activityIdFilter = ref('')
+const statusFilter = ref('')
+const userIdFilter = ref('')
 
 // 报名状态：1-已报名 2-已取消 3-已签到
 const STATUS_MAP = {
@@ -154,7 +195,10 @@ const fetchList = async () => {
   try {
     const res = await pageRegistration({
       current: queryParams.current,
-      size: queryParams.size
+      size: queryParams.size,
+      activityId: activityIdFilter.value || undefined,
+      status: statusFilter.value === '' ? undefined : statusFilter.value,
+      userId: userIdFilter.value || undefined
     })
     if (res.code === '0' && res.data) {
       registrationList.value = res.data.records || []
@@ -173,6 +217,19 @@ const fetchList = async () => {
   }
 }
 
+const searchList = () => {
+  queryParams.current = 1
+  fetchList()
+}
+
+const resetFilters = () => {
+  activityIdFilter.value = ''
+  statusFilter.value = ''
+  userIdFilter.value = ''
+  queryParams.current = 1
+  fetchList()
+}
+
 const handleView = (row) => {
   currentRecord.value = row
   detailVisible.value = true
@@ -188,6 +245,22 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.filter-area {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.filter-input {
+  width: 140px;
+}
+
+.status-select {
+  width: 140px;
 }
 
 .pagination-container {
