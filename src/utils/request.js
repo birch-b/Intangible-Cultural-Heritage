@@ -32,6 +32,9 @@ http.interceptors.response.use(
   // 响应成功的回调----------------------------------------------
   (res) => {
     if (res.status === 200) {
+      // 任一请求成功说明登录态有效，复位“登录过期”静默标记；
+      // 否则首次过期后 isRefreshing 永远为 true，后续 401 会被静默吞掉
+      isRefreshing = false
       // 假设后端返回格式为 { code: '0', message: 'success', data: ... }
       // 或者直接返回数据
       // 这里根据通常约定，如果 code 不是 '0' 或 200，视为业务错误
@@ -57,7 +60,10 @@ http.interceptors.response.use(
         ElMessage.error('登录过期，请重新登录')
         const userStore = useUserStore()
         userStore.logout()
-        router.push('/login')
+        // 已在登录页时不重复跳转，避免 vue-router 重复导航报错
+        if (router.currentRoute.value.path !== '/login') {
+          router.push('/login')
+        }
       }
     } else {
       ElMessage.error(err.message || '网络异常')

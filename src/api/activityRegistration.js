@@ -82,3 +82,27 @@ export function pageRegistration(params) {
     params
   })
 }
+
+/**
+ * 管理端修改报名状态（标记签到 / 取消 / 恢复）
+ * @param {number|string} id - 报名记录ID
+ * @param {number} status - 目标状态 1-已报名 2-已取消 3-已签到
+ */
+export function updateRegistrationStatus(id, status) {
+  return request({
+    url: `/admin/v1/activity-registration/${id}/status`,
+    method: 'put',
+    data: { status }
+  })
+}
+
+/**
+ * 管理端删除报名记录（逻辑删除）
+ * @param {number|string} id - 报名记录ID
+ */
+export function deleteRegistration(id) {
+  return request({
+    url: `/admin/v1/activity-registration/${id}`,
+    method: 'delete'
+  })
+}

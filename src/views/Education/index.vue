@@ -1,8 +1,9 @@
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { Picture, User, Reading } from '@element-plus/icons-vue'
+import { Reading } from '@element-plus/icons-vue'
 import { pageCourse } from '@/api/course'
+import CourseCard from './components/CourseCard.vue'
 
 const router = useRouter()
 
@@ -12,12 +13,71 @@ const TABS = [
   { value: 3, label: '讲座' },
   { value: 4, label: '资讯' }
 ]
+const TYPE_LABEL = Object.fromEntries(TABS.map((t) => [t.value, t.label]))
 
 const activeType = ref(1)
 const loading = ref(false)
 const courseList = ref([])
 const total = ref(0)
 const queryParams = reactive({ current: 1, size: 9 })
+
+// 各分类的内容数量：用于 Tab 徽标 + 空分类时的引导
+const tabCounts = ref({})
+// 当前分类为空时，展示的其他分类内容，避免整页空荡荡
+const fallbackList = ref([])
+
+const activeTabLabel = computed(() => TYPE_LABEL[activeType.value] || '')
+
+// 除当前分类外，第一个有内容的分类（用于空状态引导）
+const firstNonEmptyTab = computed(
+  () =>
+    TABS.find(
+      (t) => t.value !== activeType.value && (tabCounts.value[t.value] || 0) > 0
+    ) || null
+)
+
+const typeLabelOf = (item) => TYPE_LABEL[item.contentType] || ''
+
+// 兼容 { code:'0', data:{records,total} } 与直接返回 Page 对象两种格式
+const extractPage = (res) => {
+  if (res && res.code === '0' && res.data) return res.data
+  if (res && res.records) return res
+  return { records: [], total: 0 }
+}
+
+// 拉取各分类数量（仅首次加载时执行，用于 Tab 徽标）
+const loadTabCounts = async () => {
+  const entries = await Promise.all(
+    TABS.map(async (t) => {
+      try {
+        const res = await pageCourse({
+          current: 1,
+          size: 1,
+          contentType: t.value,
+          status: 1
+        })
+        return [t.value, Number(extractPage(res).total) || 0]
+      } catch (error) {
+        console.error(`获取「${t.label}」数量失败`, error)
+        return [t.value, 0]
+      }
+    })
+  )
+  tabCounts.value = Object.fromEntries(entries)
+}
+
+// 当前分类无内容时，取其他分类的内容作为推荐
+const fetchFallback = async () => {
+  try {
+    const res = await pageCourse({ current: 1, size: 6, status: 1 })
+    fallbackList.value = extractPage(res)
+      .records.filter((i) => i.contentType !== activeType.value)
+      .slice(0, 3)
+  } catch (error) {
+    console.error('获取推荐内容失败', error)
+    fallbackList.value = []
+  }
+}
 
 const fetchList = async () => {
   loading.value = true
@@ -28,18 +88,18 @@ const fetchList = async () => {
       contentType: activeType.value,
       status: 1
     })
-    if (res.code === '0' && res.data) {
-      courseList.value = res.data.records || []
-      total.value = Number(res.data.total) || 0
-    } else if (res.records) {
-      courseList.value = res.records
-      total.value = Number(res.total) || 0
-    } else {
-      courseList.value = []
-      total.value = 0
+    const page = extractPage(res)
+    courseList.value = page.records
+    total.value = Number(page.total) || 0
+    fallbackList.value = []
+
+    if (courseList.value.length === 0) {
+      await fetchFallback()
     }
   } catch (error) {
     console.error('获取培训内容失败', error)
+    courseList.value = []
+    total.value = 0
   } finally {
     loading.value = false
   }
@@ -50,12 +110,20 @@ const handleTabChange = () => {
   fetchList()
 }
 
+// 跳到第一个有内容的分类
+const goFirstNonEmptyTab = () => {
+  if (!firstNonEmptyTab.value) return
+  activeType.value = firstNonEmptyTab.value.value
+  handleTabChange()
+}
+
 const goDetail = (item) => {
   router.push(`/education/course/${item.id}`)
 }
 
 onMounted(() => {
   fetchList()
+  loadTabCounts()
 })
 </script>
 
@@ -74,75 +142,82 @@ onMounted(() => {
         class="edu-tabs"
         @tab-change="handleTabChange"
       >
-        <el-tab-pane
-          v-for="tab in TABS"
-          :key="tab.value"
-          :label="tab.label"
-          :name="tab.value"
-        />
+        <el-tab-pane v-for="tab in TABS" :key="tab.value" :name="tab.value">
+          <template #label>
+            <span class="tab-label">
+              {{ tab.label }}
+              <span v-if="tabCounts[tab.value]" class="tab-count">
+                {{ tabCounts[tab.value] }}
+              </span>
+            </span>
+          </template>
+        </el-tab-pane>
       </el-tabs>
 
-      <div v-loading="loading" class="course-grid">
-        <div
-          v-for="item in courseList"
-          :key="item.id"
-          class="course-card"
-          @click="goDetail(item)"
-        >
-          <div class="cover-wrapper">
-            <img
-              v-if="item.coverImage"
-              :src="item.coverImage"
-              :alt="item.title"
+      <div v-loading="loading" class="course-area">
+        <!-- 有内容：正常卡片网格 -->
+        <template v-if="courseList.length">
+          <div class="course-grid">
+            <CourseCard
+              v-for="item in courseList"
+              :key="item.id"
+              :item="item"
+              :type-label="typeLabelOf(item)"
+              @click="goDetail"
             />
-            <div v-else class="cover-empty">
-              <el-icon :size="36"><Picture /></el-icon>
-            </div>
-            <el-tag class="type-tag" effect="dark" size="small">
-              {{
-                item.contentTypeName ||
-                TABS.find((t) => t.value === activeType)?.label
-              }}
-            </el-tag>
           </div>
-          <div class="card-body">
-            <h3 class="card-title">{{ item.title }}</h3>
-            <p class="card-summary">{{ item.summary || '暂无简介' }}</p>
-            <div class="card-meta">
-              <span class="meta-item">
-                <el-icon><User /></el-icon>
-                {{ item.teacher || '佚名' }}
-              </span>
-              <span class="meta-price">
-                <el-tag v-if="item.isFree === 1" type="success" size="small"
-                  >免费</el-tag
-                >
-                <el-tag v-else type="danger" size="small"
-                  >¥{{ item.fee ?? 0 }}</el-tag
-                >
-              </span>
-            </div>
-            <div class="card-footer">
-              <span>{{ item.enrolledCount || 0 }} 人已学习</span>
-              <span v-if="item.duration">{{ item.duration }}</span>
-            </div>
-          </div>
-        </div>
-        <el-empty
-          v-if="!loading && courseList.length === 0"
-          description="暂无内容"
-        />
-      </div>
 
-      <div class="pagination-wrap" v-if="total > 0">
-        <el-pagination
-          v-model:current-page="queryParams.current"
-          v-model:page-size="queryParams.size"
-          layout="prev, pager, next"
-          :total="total"
-          :page-sizes="[9]"
-          @current-change="fetchList"
-        />
+          <div class="pagination-wrap" v-if="total > queryParams.size">
+            <el-pagination
+              v-model:current-page="queryParams.current"
+              v-model:page-size="queryParams.size"
+              layout="prev, pager, next"
+              :total="total"
+              :page-sizes="[9]"
+              @current-change="fetchList"
+            />
+          </div>
+        </template>
+
+        <!-- 当前分类为空：友好提示 + 其他分类推荐 -->
+        <template v-else-if="!loading">
+          <div class="empty-block">
+            <el-empty :image-size="110">
+              <template #description>
+                <p class="empty-title">「{{ activeTabLabel }}」下暂无内容</p>
+                <p class="empty-tip">可以切换上方分类看看，内容会持续更新</p>
+              </template>
+              <el-button
+                v-if="firstNonEmptyTab"
+                type="primary"
+                plain
+                @click="goFirstNonEmptyTab"
+              >
+                去看看「{{ firstNonEmptyTab.label }}」（{{
+                  tabCounts[firstNonEmptyTab.value]
+                }}）
+              </el-button>
+            </el-empty>
+          </div>
+
+          <div v-if="fallbackList.length" class="fallback">
+            <div class="fallback-head">
+              <h3>其他分类推荐</h3>
+              <span class="fallback-sub">
+                以下内容来自其他分类，或许你也会感兴趣
+              </span>
+            </div>
+            <div class="course-grid">
+              <CourseCard
+                v-for="item in fallbackList"
+                :key="item.id"
+                :item="item"
+                :type-label="typeLabelOf(item)"
+                @click="goDetail"
+              />
+            </div>
+          </div>
+        </template>
       </div>
     </div>
   </div>
@@ -193,117 +268,73 @@ onMounted(() => {
   }
 }
 
+.tab-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  .tab-count {
+    display: inline-block;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 9px;
+    background: rgba(139, 0, 0, 0.1);
+    color: #8b0000;
+    font-size: 12px;
+    line-height: 18px;
+    text-align: center;
+  }
+}
+
+.course-area {
+  min-height: 240px;
+}
+
 .course-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 24px;
-  min-height: 200px;
 }
 
-.course-card {
-  background: #fff;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
-  cursor: pointer;
+.empty-block {
+  padding: 20px 0 30px;
+
+  .empty-title {
+    margin: 0 0 6px;
+    font-size: 16px;
+    color: #555;
+  }
+
+  .empty-tip {
+    margin: 0;
+    font-size: 13px;
+    color: #999;
+  }
+}
+
+.fallback {
+  margin-top: 10px;
+  padding-top: 24px;
+  border-top: 1px dashed #d5ddea;
+}
+
+.fallback-head {
   display: flex;
-  flex-direction: column;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 18px;
 
-  &:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-
-    .cover-wrapper img {
-      transform: scale(1.05);
-    }
-  }
-}
-
-.cover-wrapper {
-  position: relative;
-  width: 100%;
-  height: 200px;
-  overflow: hidden;
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.3s ease;
+  h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #8b0000;
   }
 
-  .cover-empty {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #f0f2f5;
-    color: #909399;
+  .fallback-sub {
+    font-size: 13px;
+    color: #999;
   }
-
-  .type-tag {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-  }
-}
-
-.card-body {
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex: 1;
-}
-
-.card-title {
-  margin: 0;
-  font-size: 17px;
-  font-weight: 600;
-  color: #333;
-  line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.card-summary {
-  margin: 0;
-  font-size: 13px;
-  color: #888;
-  line-height: 1.5;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  min-height: 39px;
-}
-
-.card-meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 13px;
-  color: #666;
-
-  .meta-item {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-}
-
-.card-footer {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-  color: #999;
-  border-top: 1px solid #f0f0f0;
-  padding-top: 8px;
-  margin-top: auto;
 }
 
 .pagination-wrap {

@@ -1,15 +1,59 @@
 ﻿<script setup>
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { markAsRead } from '@/api/notice.js'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { markAsRead, deleteNotice } from '@/api/notice.js'
 import { formatTime } from '@/utils/format'
 
 const route = useRoute()
 const router = useRouter()
 const { id = '', title = '', content = '', createTime = '' } = route.query || {}
 
+// 删除请求进行中（防止重复点击）
+const deleting = ref(false)
+
 const goBackToNotice = () => {
   router.push('/user/MessageNotification')
+}
+
+// 删除消息（后端 DELETE /api/admin/v1/notice/{id}，逻辑删除，仅本人可删）
+const handleDelete = async () => {
+  if (!id) {
+    ElMessage.warning('消息ID缺失，无法删除')
+    return
+  }
+  try {
+    await ElMessageBox.confirm(
+      '确定要删除这条消息吗？删除后不可恢复。',
+      '删除确认',
+      {
+        confirmButtonText: '确定删除',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+  } catch {
+    // 用户取消
+    return
+  }
+
+  deleting.value = true
+  try {
+    const res = await deleteNotice(id)
+    // 兼容 { code: '0' | 200 } 与无 code 的返回格式
+    if (res && res.code !== undefined && res.code !== '0' && res.code !== 200) {
+      ElMessage.error(res.message || '删除失败')
+      return
+    }
+    ElMessage.success('删除成功')
+    // 用 replace 避免返回时回到已删除的详情页
+    router.replace('/user/MessageNotification')
+  } catch (error) {
+    console.error('删除消息失败', error)
+    ElMessage.error('删除失败，请稍后重试')
+  } finally {
+    deleting.value = false
+  }
 }
 
 onMounted(() => {
@@ -47,9 +91,13 @@ onMounted(() => {
             <el-button text type="primary" @click="goBackToNotice">
               返回消息通知
             </el-button>
-            <div class="delete">
+            <div
+              class="delete"
+              :class="{ 'is-deleting': deleting }"
+              @click="deleting ? null : handleDelete()"
+            >
               <i class="iconfont icon-shanchu" style="margin-right: 0.5vw"></i
-              >删除
+              >{{ deleting ? '删除中…' : '删除' }}
             </div>
           </div>
         </div>
@@ -124,6 +172,16 @@ onMounted(() => {
         &:hover {
           cursor: pointer;
           color: red;
+        }
+
+        &.is-deleting {
+          cursor: not-allowed;
+          color: #c0c4cc;
+
+          &:hover {
+            cursor: not-allowed;
+            color: #c0c4cc;
+          }
         }
       }
     }

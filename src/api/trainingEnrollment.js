@@ -46,6 +46,20 @@ export function pageMyEnrollment(params) {
 }
 
 /**
+ * 管理端分页查询全站学习记录（可按内容/用户/状态筛选）
+ * @param {Object} params - { current, size, courseId?, userId?, status? }
+ * @returns 记录字段含 id, courseId, courseTitle, courseCoverImage,
+ *          contentTypeName, userId, username, status, progress, createTime
+ */
+export function pageAdminEnrollment(params) {
+  return request({
+    url: '/admin/v1/training-enrollment/admin/page',
+    method: 'get',
+    params
+  })
+}
+
+/**
  * 查询某内容的报名人数
  * @param {number|string} courseId
  * @returns data 为人数

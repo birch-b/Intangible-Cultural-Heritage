@@ -137,11 +137,7 @@
         <el-form-item label="电话" prop="phone">
           <el-input v-model="adminForm.phone" />
         </el-form-item>
-        <el-form-item
-          label="邮箱"
-          prop="mail"
-          v-if="adminFormMode === 'add'"
-        >
+        <el-form-item label="邮箱" prop="mail" v-if="adminFormMode === 'add'">
           <el-input v-model="adminForm.mail" />
         </el-form-item>
         <el-form-item
@@ -158,7 +154,9 @@
             <el-button
               @click="getAdminEmailCode"
               :disabled="adminCodeDisabled"
-              >{{ adminCodeCount === 0 ? '获取验证码' : adminCodeCount + 's' }}</el-button
+              >{{
+                adminCodeCount === 0 ? '获取验证码' : adminCodeCount + 's'
+              }}</el-button
             >
           </div>
         </el-form-item>
@@ -467,7 +465,12 @@ const submitAdminForm = () => {
             phone: adminForm.phone,
             mail: adminForm.mail,
             emailCode: adminForm.emailCode,
-            role: adminForm.role === '超级管理员' ? 2 : adminForm.role === '普通管理员' ? 1 : 0
+            role:
+              adminForm.role === '超级管理员'
+                ? 2
+                : adminForm.role === '普通管理员'
+                  ? 1
+                  : 0
           }
           const res = await createAdminAPI(reqData)
           if (res.code === '0') {
@@ -480,7 +483,12 @@ const submitAdminForm = () => {
           const reqData = {
             username: adminForm.username,
             phone: adminForm.phone,
-            role: adminForm.role === '超级管理员' ? 2 : adminForm.role === '普通管理员' ? 1 : 0
+            role:
+              adminForm.role === '超级管理员'
+                ? 2
+                : adminForm.role === '普通管理员'
+                  ? 1
+                  : 0
           }
           if (adminForm.password) {
             reqData.password = adminForm.password

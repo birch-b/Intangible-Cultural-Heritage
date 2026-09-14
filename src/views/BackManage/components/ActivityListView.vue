@@ -13,10 +13,10 @@
             @change="searchNews"
           >
             <el-option
-              v-for="item in ACTIVITY_TYPES"
-              :key="item.value"
+              v-for="item in filterOptions"
+              :key="item.key"
               :label="item.label"
-              :value="item.value"
+              :value="item.type"
             />
           </el-select>
           <el-input
@@ -135,17 +135,17 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="活动分类" prop="type">
+            <el-form-item label="活动分类" prop="categoryKey">
               <el-select
-                v-model="formData.type"
+                v-model="formData.categoryKey"
                 placeholder="请选择分类"
                 style="width: 100%"
               >
                 <el-option
-                  v-for="item in ACTIVITY_TYPES"
-                  :key="item.value"
+                  v-for="item in categoryOptions"
+                  :key="item.key"
                   :label="item.label"
-                  :value="item.value"
+                  :value="item.key"
                 />
               </el-select>
             </el-form-item>
@@ -306,7 +306,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { Search, Plus } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
@@ -316,12 +316,83 @@ import {
   updateActivity,
   deleteActivity
 } from '@/api/heritageActivity'
+import { listActivityCategory } from '@/api/activityCategory'
 import { uploadFileAPI } from '@/api/file'
 import { ACTIVITY_TYPES, getActivityTypeLabel } from '@/constants/activityType'
 import dayjs from 'dayjs'
 
-// 活动分类名称（枚举统一维护于 src/constants/activityType.js）
-const getTypeName = (val) => getActivityTypeLabel(val)
+/**
+ * 活动分类下拉数据源（打通「活动分类管理」）
+ * 统一结构 { key, label, categoryId, type }：
+ * - 后端 /activity-category/list 可用时：key = 分类ID，categoryId = 分类ID，
+ *   type = 后端按分类名映射出的枚举值(code)，用于兼容仍按 type 查询的列表接口
+ * - 接口不可用或为空时：回落内置枚举 ACTIVITY_TYPES，key = 枚举值，categoryId = null
+ * 这样无论后端分类表是否就绪，活动的新增/编辑都不会被阻塞。
+ */
+const categoryOptions = ref([])
+// 加载中的请求（并发调用复用同一 Promise，避免重复请求）
+let categoryInflight = null
+
+const loadCategoryOptions = () => {
+  if (categoryInflight) return categoryInflight
+  categoryInflight = (async () => {
+    try {
+      const res = await listActivityCategory()
+      const list = (res && res.data) || res
+      if (Array.isArray(list) && list.length) {
+        categoryOptions.value = list
+          .filter((c) => c.status === undefined || c.status === 1)
+          .map((c) => ({
+            key: c.id,
+            label: c.name,
+            categoryId: c.id,
+            type:
+              c.code === undefined || c.code === null ? null : Number(c.code)
+          }))
+        return
+      }
+    } catch (error) {
+      console.error('获取活动分类失败，回落内置枚举', error)
+    }
+    // 兜底：保证活动的新增/编辑始终可用
+    categoryOptions.value = ACTIVITY_TYPES.map((t) => ({
+      key: t.value,
+      label: t.label,
+      categoryId: null,
+      type: t.value
+    }))
+  })().finally(() => {
+    categoryInflight = null
+  })
+  return categoryInflight
+}
+
+// 列表筛选项：仅能映射到枚举 type 的分类可作为查询条件（列表接口按 type 过滤）
+const filterOptions = computed(() =>
+  categoryOptions.value.filter((o) => o.type !== null)
+)
+
+// 分类名称展示：优先用「活动分类管理」里的名称，找不到再回落内置枚举
+const getTypeName = (val) => {
+  if (val === null || val === undefined) return '未分类'
+  const hit = categoryOptions.value.find((o) => o.type === Number(val))
+  return hit ? hit.label : getActivityTypeLabel(val)
+}
+
+// 根据后端返回的 categoryId / type 反查下拉选中项
+const resolveCategoryKey = (row) => {
+  if (!row) return null
+  const list = categoryOptions.value
+  if (row.categoryId !== null && row.categoryId !== undefined) {
+    const byId = list.find((o) => o.categoryId === row.categoryId)
+    if (byId) return byId.key
+  }
+  if (row.type !== null && row.type !== undefined) {
+    const byType = list.find((o) => o.type === Number(row.type))
+    if (byType) return byType.key
+  }
+  return null
+}
 
 // 格式化日期时间
 const formatDateTime = (row, column, cellValue) => {
@@ -372,6 +443,9 @@ const activityDateRange = ref([]) // 日期范围绑定
 const formData = reactive({
   id: null,
   title: '',
+  // 分类下拉选中值（分类表ID 或 枚举值），提交前会转换成 categoryId / type
+  categoryKey: null,
+  categoryId: null,
   type: null,
   publisher: '',
   status: 0,
@@ -385,14 +459,18 @@ const formData = reactive({
 
 const rules = {
   title: [{ required: true, message: '请输入标题', trigger: 'blur' }],
-  type: [{ required: true, message: '请选择分类', trigger: 'change' }],
+  categoryKey: [{ required: true, message: '请选择分类', trigger: 'change' }],
   status: [{ required: true, message: '请选择状态', trigger: 'change' }]
 }
 
 // 打开新增弹窗
-const handleAddNews = () => {
+const handleAddNews = async () => {
   isEdit.value = false
   resetForm()
+  // 确保分类选项已就绪（首次打开或仍在加载时会等待）
+  if (!categoryOptions.value.length) {
+    await loadCategoryOptions()
+  }
   dialogVisible.value = true
 }
 
@@ -400,8 +478,14 @@ const handleAddNews = () => {
 const handleEditNews = async (row) => {
   isEdit.value = true
   resetForm()
+  // 确保分类选项已就绪，否则下拉回显会为空
+  if (!categoryOptions.value.length) {
+    await loadCategoryOptions()
+  }
   // 先从列表填充基础数据，防止详情接口慢导致空白
   Object.assign(formData, row)
+  // 回显分类下拉（列表可能未返回 categoryId，则按 type 反查）
+  formData.categoryKey = resolveCategoryKey(row)
 
   // 回显日期范围
   if (formData.activityTime) {
@@ -425,6 +509,8 @@ const handleEditNews = async (row) => {
       Object.assign(formData, res.data)
       // 确保 imageList 存在
       if (!formData.imageList) formData.imageList = []
+      // 详情含 categoryId 时重新解析，回显更准确
+      formData.categoryKey = resolveCategoryKey(formData)
     }
   } catch (error) {
     console.error('获取详情失败', error)
@@ -454,6 +540,8 @@ const resetForm = () => {
   if (formRef.value) formRef.value.resetFields()
   formData.id = null
   formData.title = ''
+  formData.categoryKey = null
+  formData.categoryId = null
   formData.type = null
   formData.publisher = ''
   formData.status = 0
@@ -560,11 +648,31 @@ const submitForm = async () => {
           img.sort = idx + 1
         })
 
+        // 分类：下拉选中值 → 后端字段
+        // 有分类表ID 时传 categoryId（后端会校验并映射为枚举落 type 列）；
+        // 否则回落到内置枚举，直接传 type，保证活动始终可保存。
+        const payload = { ...formData }
+        delete payload.categoryKey
+        delete payload.categoryId
+        const picked = categoryOptions.value.find(
+          (o) => o.key === formData.categoryKey
+        )
+        if (
+          picked &&
+          picked.categoryId !== null &&
+          picked.categoryId !== undefined
+        ) {
+          payload.categoryId = picked.categoryId
+        }
+        if (picked && picked.type !== null) {
+          payload.type = picked.type
+        }
+
         if (isEdit.value) {
-          await updateActivity(formData)
+          await updateActivity(payload)
           ElMessage.success('更新成功')
         } else {
-          await createActivity(formData)
+          await createActivity(payload)
           ElMessage.success('发布成功')
         }
         dialogVisible.value = false
@@ -581,6 +689,7 @@ const submitForm = async () => {
 
 // 初始化
 onMounted(() => {
+  loadCategoryOptions()
   searchNews()
 })
 </script>

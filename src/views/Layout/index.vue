@@ -1,6 +1,16 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { pageNotice } from '@/api/notice.js'
+import { ElMessage } from 'element-plus'
+import { Search } from '@element-plus/icons-vue'
+import { useUserStore } from '@/stores/user'
+
+const router = useRouter()
+const userStore = useUserStore()
+
+// 用户头像地址（未登录或未设置头像时为空，回落到默认图标）
+const avatarUrl = computed(() => userStore.userInfo?.avatar || '')
 
 // 搜索框绑定值
 const search_text = ref('')
@@ -8,7 +18,19 @@ const search_text = ref('')
 const hasUnread = ref(false)
 let timer = null
 
+// 顶部搜索：后端未提供全局搜索接口，目前复用非遗项目分页接口作为基础检索
+const handleSearch = () => {
+  const keyword = (search_text.value || '').trim()
+  if (!keyword) {
+    ElMessage.warning('请输入要搜索的关键词')
+    return
+  }
+  router.push({ path: '/heri_category', query: { title: keyword } })
+}
+
 const checkUnread = async () => {
+  // 未登录时不轮询：否则请求必然 401，会把访客强制跳转到登录页
+  if (!userStore.token) return
   try {
     const res = await pageNotice({ page: 1, pageSize: 1, readStatus: 0 })
     // console.log('Check Unread Response:', res) // Debug log
@@ -90,9 +112,12 @@ onUnmounted(() => {
               v-model="search_text"
               placeholder="搜索非遗文化"
               class="search-input"
+              clearable
+              @keyup.enter="handleSearch"
+              @clear="search_text = ''"
             >
               <template #prefix>
-                <el-icon>
+                <el-icon @click="handleSearch" style="cursor: pointer">
                   <Search />
                 </el-icon>
               </template>
@@ -100,7 +125,15 @@ onUnmounted(() => {
           </div>
           <div class="avatar" @click="$router.push('/user')">
             <el-badge :is-dot="hasUnread" class="badge-item">
-              <el-icon>
+              <el-avatar
+                v-if="avatarUrl"
+                :src="avatarUrl"
+                fit="cover"
+                class="avatar-img"
+              >
+                <el-icon><UserFilled /></el-icon>
+              </el-avatar>
+              <el-icon v-else>
                 <UserFilled />
               </el-icon>
             </el-badge>
@@ -226,6 +259,20 @@ onUnmounted(() => {
         :hover {
           cursor: pointer;
           color: #797070;
+        }
+
+        .badge-item {
+          display: block;
+          width: 100%;
+          height: 100%;
+        }
+
+        // 用户头像（撑满外层圆形容器）
+        .avatar-img {
+          --el-avatar-size: 100%;
+          width: 100%;
+          height: 100%;
+          display: block;
         }
       }
     }

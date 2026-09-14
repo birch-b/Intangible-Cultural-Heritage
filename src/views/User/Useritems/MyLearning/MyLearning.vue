@@ -174,24 +174,26 @@ onMounted(() => {
               {{ formatTime(scope.row.createTime) }}
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="150" fixed="right">
+          <el-table-column label="操作" width="190" fixed="right">
             <template #default="scope">
-              <el-button
-                size="small"
-                type="primary"
-                plain
-                @click="goCourse(scope.row)"
-              >
-                {{ scope.row.status === 1 ? '查看内容' : '继续学习' }}
-              </el-button>
-              <el-button
-                size="small"
-                type="danger"
-                plain
-                @click="handleCancel(scope.row)"
-              >
-                退出
-              </el-button>
+              <div class="action-btns">
+                <el-button
+                  size="small"
+                  type="primary"
+                  plain
+                  @click="goCourse(scope.row)"
+                >
+                  {{ scope.row.status === 1 ? '查看内容' : '继续学习' }}
+                </el-button>
+                <el-button
+                  size="small"
+                  type="danger"
+                  plain
+                  @click="handleCancel(scope.row)"
+                >
+                  退出
+                </el-button>
+              </div>
             </template>
           </el-table-column>
           <template #empty>
@@ -260,5 +262,17 @@ onMounted(() => {
   background: #f5f7fa;
   color: #909399;
   font-size: 20px;
+}
+
+/* 操作列按钮：强制同一水平线，禁用换行 */
+.action-btns {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+
+  :deep(.el-button) {
+    margin-left: 0; /* 覆盖 element-plus 按钮之间的默认外边距，改用 gap 控制 */
+  }
 }
 </style>

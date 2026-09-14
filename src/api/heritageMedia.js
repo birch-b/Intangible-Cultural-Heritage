@@ -24,6 +24,7 @@ export const getMediaPageAPI = (params) => {
  * @param {number} data.itemId - 关联的非遗项目ID
  * @param {number} data.mediaType - 资源类型：1=图片 2=视频 3=音频
  * @param {string} data.url - 资源地址
+ * @param {string} [data.coverUrl] - 音视频封面图 URL（仅 mediaType=2/3 使用；后端 DTO 需声明此字段）
  * @param {number} data.isMain - 是否主图：0=否 1=是
  * @param {number} data.sourceType - 资源来源类型：0=基础资源 1=媒体关注 2=文化讲堂
  * @param {string} [data.title] - 标题
@@ -44,6 +45,7 @@ export const addMediaAPI = (data) => {
  * @param {number} [data.itemId] - 关联的非遗项目ID
  * @param {number} [data.mediaType] - 资源类型：1=图片 2=视频 3=音频
  * @param {string} [data.url] - 资源地址
+ * @param {string} [data.coverUrl] - 音视频封面图 URL（后端 DTO 需声明此字段）
  * @param {number} [data.isMain] - 是否主图：0=否 1=是
  * @param {number} [data.sourceType] - 资源来源类型：0=基础资源 1=媒体关注 2=文化讲堂
  * @param {string} [data.title] - 标题

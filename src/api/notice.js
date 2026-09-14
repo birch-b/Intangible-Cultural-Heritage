@@ -16,3 +16,15 @@ export const markAsRead = (id) => {
     method: 'put'
   })
 }
+
+/**
+ * 删除通知（逻辑删除，仅本人可删）
+ * @param {number|string} id - 通知ID
+ * @returns {Promise} data 为 true 表示删除成功
+ */
+export const deleteNotice = (id) => {
+  return request({
+    url: `/admin/v1/notice/${id}`,
+    method: 'delete'
+  })
+}

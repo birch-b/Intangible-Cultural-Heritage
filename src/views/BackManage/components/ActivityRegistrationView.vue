@@ -93,10 +93,50 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="90" fixed="right">
+      <el-table-column label="操作" width="300" fixed="right">
         <template #default="scope">
           <el-button size="small" type="info" @click="handleView(scope.row)">
             查看
+          </el-button>
+          <el-button
+            v-if="scope.row.status === 1"
+            size="small"
+            type="success"
+            @click="handleChangeStatus(scope.row, 3, '标记为已签到')"
+          >
+            签到
+          </el-button>
+          <el-button
+            v-if="scope.row.status === 3"
+            size="small"
+            type="warning"
+            plain
+            @click="handleChangeStatus(scope.row, 1, '撤销签到，恢复为已报名')"
+          >
+            撤销签到
+          </el-button>
+          <el-button
+            v-if="scope.row.status !== 2"
+            size="small"
+            type="warning"
+            @click="handleChangeStatus(scope.row, 2, '取消该报名')"
+          >
+            取消
+          </el-button>
+          <el-button
+            v-if="scope.row.status === 2"
+            size="small"
+            type="primary"
+            @click="handleChangeStatus(scope.row, 1, '恢复该报名')"
+          >
+            恢复
+          </el-button>
+          <el-button
+            size="small"
+            type="danger"
+            @click="handleDeleteRegistration(scope.row)"
+          >
+            删除
           </el-button>
         </template>
       </el-table-column>
@@ -133,6 +173,12 @@
         <el-descriptions-item label="报名时间">
           {{ formatTime(currentRecord.createTime) }}
         </el-descriptions-item>
+        <el-descriptions-item v-if="currentRecord.checkInTime" label="签到时间">
+          {{ formatTime(currentRecord.checkInTime) }}
+        </el-descriptions-item>
+        <el-descriptions-item v-if="currentRecord.cancelTime" label="取消时间">
+          {{ formatTime(currentRecord.cancelTime) }}
+        </el-descriptions-item>
         <el-descriptions-item label="报名状态">
           <el-tag
             :type="getStatusTag(currentRecord.status).type"
@@ -155,7 +201,12 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { Search, Refresh } from '@element-plus/icons-vue'
-import { pageRegistration } from '@/api/activityRegistration'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import {
+  pageRegistration,
+  updateRegistrationStatus,
+  deleteRegistration
+} from '@/api/activityRegistration'
 import { formatTime } from '@/utils/format'
 
 const loading = ref(false)
@@ -233,6 +284,61 @@ const resetFilters = () => {
 const handleView = (row) => {
   currentRecord.value = row
   detailVisible.value = true
+}
+
+// 修改报名状态（后端 PUT /activity-registration/{id}/status）
+const handleChangeStatus = (row, status, actionText) => {
+  const currentLabel = (STATUS_MAP[row.status] || {}).label || '未知'
+  ElMessageBox.confirm(
+    `确定要「${actionText}」吗？当前状态：${currentLabel}`,
+    '状态变更确认',
+    {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    }
+  )
+    .then(async () => {
+      try {
+        await updateRegistrationStatus(row.id, status)
+        ElMessage.success('操作成功')
+        fetchList()
+      } catch (error) {
+        console.error('修改报名状态失败', error)
+        ElMessage.error('操作失败，请稍后重试')
+      }
+    })
+    .catch(() => {})
+}
+
+// 删除报名记录（后端 DELETE /activity-registration/{id}，逻辑删除）
+const handleDeleteRegistration = (row) => {
+  ElMessageBox.confirm(
+    `确定要删除「${row.username || '该用户'}」对「${
+      row.activityTitle || '该活动'
+    }」的报名记录吗？删除后不可恢复。`,
+    '删除确认',
+    {
+      confirmButtonText: '确定删除',
+      cancelButtonText: '取消',
+      type: 'warning'
+    }
+  )
+    .then(async () => {
+      try {
+        await deleteRegistration(row.id)
+        ElMessage.success('删除成功')
+        // 若当前页删空则回退一页
+        if (registrationList.value.length === 1 && queryParams.current > 1) {
+          queryParams.current--
+        }
+        fetchList()
+      } catch (error) {
+        console.error('删除报名记录失败', error)
+        ElMessage.error('删除失败，请稍后重试')
+      }
+    })
+    .catch(() => {})
 }
 
 onMounted(() => {

@@ -1,10 +1,14 @@
 <script setup>
 import { ArrowRight } from '@element-plus/icons-vue'
-import { ref, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, computed, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { getCategoryListAPI, getHeritagePageAPI } from '@/api/heritage'
 
 const router = useRouter()
+const route = useRoute()
+
+// 顶部搜索带来的关键词（接 Layout 搜索框）
+const queryTitle = ref(route.query.title || '')
 
 // 下拉框数据
 const selectValue = ref('')
@@ -38,15 +42,36 @@ const getCategoryList = async () => {
   }
 }
 
+/**
+ * 解析搜索关键词
+ * 顶部搜索框的关键词往往是分类名（如“传统舞蹈”），而项目标题里并不含分类名，
+ * 所以先按分类名匹配：命中则切换成按分类查询；没命中才按项目标题模糊查询。
+ * 命中时直接返回 categoryId，避免依赖 selectValue 的赋值时序。
+ */
+const resolveKeyword = () => {
+  const kw = (queryTitle.value || '').trim()
+  if (!kw) return {}
+  const hit = selectOptions.value.find((o) => o.label.includes(kw))
+  if (hit) {
+    selectValue.value = hit.value // 同步下拉框，让用户看到命中的分类
+    return { categoryId: hit.value }
+  }
+  return { title: kw }
+}
+
 // 获取项目列表
 const getHeritageList = async () => {
   loading.value = true
   try {
+    // 必须先解析关键词：命中分类时会同步 selectValue，
+    // 若放在对象字面量里展开，categoryId 会先于它求值而取到旧值。
+    const keywordParam = resolveKeyword()
     const params = {
       current: pageParams.value.current,
       size: pageParams.value.size,
       categoryId: selectValue.value || undefined, // 如果为空则不传，查询所有
-      status: 2 // 仅查询已发布的
+      status: 2, // 仅查询已发布的
+      ...keywordParam
     }
     const res = await getHeritagePageAPI(params)
     if (res.code === '0' || res.code === 200 || !res.code) {
@@ -63,6 +88,8 @@ const getHeritageList = async () => {
 
 // 监听筛选变化
 const handleFilterChange = () => {
+  // 手动选择分类后，不再受顶部搜索关键词影响
+  queryTitle.value = ''
   pageParams.value.current = 1
   getHeritageList()
 }
@@ -93,10 +120,21 @@ const goToDetail = (row) => {
   router.push(`/heri_detail?id=${row.id}`)
 }
 
-onMounted(() => {
-  getCategoryList()
+onMounted(async () => {
+  // 先加载分类，保证搜索关键词能匹配到分类名
+  await getCategoryList()
   getHeritageList()
 })
+
+// 顶部搜索关键词变化时重新查询
+watch(
+  () => route.query.title,
+  (newVal) => {
+    queryTitle.value = newVal || ''
+    pageParams.value.current = 1
+    getHeritageList()
+  }
+)
 </script>
 
 <template>

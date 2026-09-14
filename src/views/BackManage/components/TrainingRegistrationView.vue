@@ -7,6 +7,38 @@
       </div>
     </template>
 
+    <!-- 筛选区域 -->
+    <div class="filter-area">
+      <el-input
+        v-model="courseIdFilter"
+        placeholder="内容ID"
+        class="filter-input"
+        clearable
+        @keyup.enter="searchList"
+      />
+      <el-input
+        v-model="userIdFilter"
+        placeholder="用户ID"
+        class="filter-input"
+        clearable
+        @keyup.enter="searchList"
+      />
+      <el-select
+        v-model="statusFilter"
+        placeholder="学习状态"
+        clearable
+        class="status-select"
+        @change="searchList"
+      >
+        <el-option label="学习中" :value="0" />
+        <el-option label="已结业" :value="1" />
+      </el-select>
+      <el-button :icon="Search" type="primary" @click="searchList">
+        查询
+      </el-button>
+      <el-button @click="resetFilters">重置</el-button>
+    </div>
+
     <!-- 列表 -->
     <el-table
       v-loading="loading"
@@ -42,6 +74,14 @@
         min-width="180"
         show-overflow-tooltip
       />
+      <el-table-column label="学习用户" width="140" show-overflow-tooltip>
+        <template #default="scope">
+          <span>{{ scope.row.username || '—' }}</span>
+          <span v-if="scope.row.userId" class="user-id">
+            (ID:{{ scope.row.userId }})
+          </span>
+        </template>
+      </el-table-column>
       <el-table-column prop="contentTypeName" label="类型" width="100">
         <template #default="scope">
           <el-tag effect="plain">{{ scope.row.contentTypeName || '—' }}</el-tag>
@@ -65,7 +105,11 @@
           />
         </template>
       </el-table-column>
-      <el-table-column prop="createTime" label="加入时间" width="170" />
+      <el-table-column label="加入时间" width="170">
+        <template #default="scope">
+          {{ formatTime(scope.row.createTime) }}
+        </template>
+      </el-table-column>
       <template #empty>
         <el-empty description="暂无学习记录" />
       </template>
@@ -87,23 +131,33 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { Refresh, Picture } from '@element-plus/icons-vue'
-import { pageMyEnrollment } from '@/api/trainingEnrollment'
+import { Refresh, Picture, Search } from '@element-plus/icons-vue'
+import { pageAdminEnrollment } from '@/api/trainingEnrollment'
+import { formatTime } from '@/utils/format'
 
 const loading = ref(false)
 const enrollmentList = ref([])
 const total = ref(0)
 const queryParams = reactive({ current: 1, size: 10 })
 
+// 筛选条件
+const courseIdFilter = ref('')
+const userIdFilter = ref('')
+const statusFilter = ref('')
+
 const indexMethod = (index) =>
   (queryParams.current - 1) * queryParams.size + index + 1
 
+// 获取全站学习记录（管理端分页，可按内容/用户/状态筛选）
 const fetchList = async () => {
   loading.value = true
   try {
-    const res = await pageMyEnrollment({
+    const res = await pageAdminEnrollment({
       current: queryParams.current,
-      size: queryParams.size
+      size: queryParams.size,
+      courseId: courseIdFilter.value || undefined,
+      userId: userIdFilter.value || undefined,
+      status: statusFilter.value === '' ? undefined : statusFilter.value
     })
     if (res.code === '0' && res.data) {
       enrollmentList.value = res.data.records || []
@@ -122,6 +176,20 @@ const fetchList = async () => {
   }
 }
 
+// 条件变化后查询需重置到第一页
+const searchList = () => {
+  queryParams.current = 1
+  fetchList()
+}
+
+const resetFilters = () => {
+  courseIdFilter.value = ''
+  userIdFilter.value = ''
+  statusFilter.value = ''
+  queryParams.current = 1
+  fetchList()
+}
+
 onMounted(() => {
   fetchList()
 })
@@ -132,6 +200,28 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.filter-area {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.filter-input {
+  width: 140px;
+}
+
+.status-select {
+  width: 140px;
+}
+
+.user-id {
+  margin-left: 4px;
+  color: #909399;
+  font-size: 12px;
 }
 
 .image-slot {
