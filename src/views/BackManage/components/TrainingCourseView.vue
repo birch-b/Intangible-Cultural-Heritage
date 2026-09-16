@@ -129,21 +129,27 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="180" fixed="right">
+      <el-table-column label="操作" width="210" fixed="right">
         <template #default="scope">
-          <el-button size="small" type="primary" @click="handleEdit(scope.row)">
-            编辑
-          </el-button>
-          <el-button size="small" type="info" @click="handleView(scope.row)">
-            查看
-          </el-button>
-          <el-button
-            size="small"
-            type="danger"
-            @click="handleDelete(scope.row)"
-          >
-            删除
-          </el-button>
+          <div class="row-actions">
+            <el-button
+              size="small"
+              type="primary"
+              @click="handleEdit(scope.row)"
+            >
+              编辑
+            </el-button>
+            <el-button size="small" type="info" @click="handleView(scope.row)">
+              查看
+            </el-button>
+            <el-button
+              size="small"
+              type="danger"
+              @click="handleDelete(scope.row)"
+            >
+              删除
+            </el-button>
+          </div>
         </template>
       </el-table-column>
       <template #empty>
@@ -264,7 +270,7 @@
                 type="datetime"
                 placeholder="选择报名截止时间"
                 format="YYYY-MM-DD HH:mm:ss"
-                value-format="YYYY-MM-DD HH:mm:ss"
+                value-format="YYYY-MM-DDTHH:mm:ss"
                 style="width: 100%"
               />
             </el-form-item>
@@ -576,6 +582,11 @@ const defaultForm = () => ({
 })
 const formData = reactive(defaultForm())
 
+// 后端 LocalDateTime 仅接受 ISO 格式且不带毫秒/时区，统一截断到秒，
+// 兼容 'YYYY-MM-DD HH:mm:ss' 与后端返回的 'YYYY-MM-DDTHH:mm:ss.000+00:00'
+const toISODateTime = (val) =>
+  !val ? '' : String(val).trim().replace(' ', 'T').slice(0, 19)
+
 const formRules = {
   title: [{ required: true, message: '请输入标题', trigger: 'blur' }],
   contentType: [
@@ -661,7 +672,7 @@ const openDialog = async (mode, row) => {
         isFree: detail.isFree ?? 1,
         fee: detail.fee ?? 0,
         status: detail.status ?? 0,
-        enrollmentDeadline: detail.enrollmentDeadline || '',
+        enrollmentDeadline: toISODateTime(detail.enrollmentDeadline),
         maxEnrollment: detail.maxEnrollment ?? 0,
         communityEnabled: detail.communityEnabled ?? 1,
         sectionList: (detail.sectionList || []).map((s) => ({
@@ -770,7 +781,7 @@ const submitForm = () => {
       const payload = {
         ...formData,
         fee: formData.isFree === 1 ? 0 : formData.fee,
-        enrollmentDeadline: formData.enrollmentDeadline || null,
+        enrollmentDeadline: toISODateTime(formData.enrollmentDeadline) || null,
         sectionList: formData.sectionList.map((s, i) => ({
           ...s,
           courseId: formData.id,
@@ -810,6 +821,17 @@ onMounted(() => {
 .header-actions {
   display: flex;
   gap: 1rem;
+}
+
+/* 操作列按钮一行排列，禁止换行 */
+.row-actions {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  gap: 6px;
+}
+.row-actions .el-button + .el-button {
+  margin-left: 0;
 }
 
 .filter-area {

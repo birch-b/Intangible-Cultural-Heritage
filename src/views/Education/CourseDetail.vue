@@ -35,6 +35,10 @@ const courseId = route.params.id
 const loading = ref(false)
 const detail = ref(null)
 
+// 后端返回的时间带 T/毫秒/时区，展示时统一截取为 'YYYY-MM-DD HH:mm'
+const formatDateTime = (v) =>
+  !v ? '' : String(v).replace('T', ' ').slice(0, 16)
+
 // 章节
 const activeSection = ref(null)
 const sections = computed(() => {
@@ -284,7 +288,7 @@ onMounted(() => {
               >
               <span v-if="detail.enrollmentDeadline">
                 <el-icon><Calendar /></el-icon>
-                报名截止：{{ detail.enrollmentDeadline }}
+                报名截止：{{ formatDateTime(detail.enrollmentDeadline) }}
               </span>
             </div>
             <el-button
@@ -445,7 +449,9 @@ onMounted(() => {
                   <span class="comment-user">{{
                     comment.username || '匿名用户'
                   }}</span>
-                  <span class="comment-time">{{ comment.createTime }}</span>
+                  <span class="comment-time">{{
+                    formatDateTime(comment.createTime)
+                  }}</span>
                 </div>
                 <div class="comment-text">
                   <template v-if="comment.parentId">
